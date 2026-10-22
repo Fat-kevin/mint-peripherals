@@ -1,0 +1,213 @@
+/* ============ Settings ============ */
+
+.settings-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1.08fr minmax(0, 1fr);
+  gap: 14px;
+}
+
+.settings-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-panel {
+  min-height: 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modules-panel {
+  flex: 0 0 330px;
+}
+
+.notify-panel {
+  flex: 1;
+}
+
+.write-panel {
+  flex: 0 0 300px;
+}
+
+.backup-panel {
+  flex: 1;
+}
+
+.setting-rows {
+  margin-top: 8px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.setting-row {
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.setting-row.compact {
+  height: 44px;
+}
+
+.setting-row:last-child {
+  border-bottom: 0;
+}
+
+.setting-copy {
+  min-width: 0;
+}
+
+.setting-copy strong {
+  display: block;
+  color: #dfe2e8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.setting-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.setting-row .switch-wrap {
+  flex: 0 0 auto;
+}
+
+.threshold-row {
+  height: 54px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.threshold-select {
+  width: 92px;
+}
+
+.write-note {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--text-4);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.write-note svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin-top: 1px;
+  color: #8b93a1;
+}
+
+.backup-desc {
+  margin-top: 8px;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.backup-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.backup-select {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.backup-row .btn {
+  flex: 0 0 auto;
+  height: 30px;
+  font-size: 10.5px;
+}
+
+.btn.ghost.danger {
+  color: var(--red);
+}
+
+.btn.ghost.danger:hover {
+  color: #ff9a90;
+}
+
+.backup-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--text-4);
+  font-size: 10.5px;
+}
+
+.settings-footer {
+  flex: 0 0 62px;
+  min-height: 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.diag-copy {
+  min-width: 0;
+}
+
+.diag-copy h2 {
+  color: #e8eaee;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.diag-copy span {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diag-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.diag-actions .btn {
+  height: 30px;
+  font-size: 10.5px;
+}
+
+.config-path {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border: 1px solid #343842;
+  border-radius: 5px;
+  background: #20232a;
+  color: var(--text-4);
+  font-size: 9.5px;
+}

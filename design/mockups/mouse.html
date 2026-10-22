@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>外设中枢 · 鼠标</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="screens.css">
+  <link rel="stylesheet" href="mouse.css">
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="title-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><span>外设中枢</span></div>
+    <div class="title-drag"></div>
+    <div class="win-actions">
+      <button class="win-btn" aria-label="最小化"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn disabled" aria-label="最大化不可用"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="2.5" y="2.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn close" aria-label="关闭"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><div><div class="name">外设中枢</div><div class="sub">桌面设备控制台</div></div></div>
+      <div class="nav-section">设备</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+        设备中心
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+        耳机<span class="nav-state"></span>
+      </a>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.2" y="2.8" width="9.6" height="14.4" rx="4.8"/><path d="M10 6v4"/></svg>
+        鼠标<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2.5" width="7" height="15" rx="2"/><circle cx="10" cy="7.2" r="1.8"/><path d="M7.7 12.5h4.6M10 11.2v2.6"/></svg>
+        遥控器<span class="nav-state"></span>
+      </a>
+      <div class="nav-section">系统</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8M14 6h3M3 14h3M9 14h8"/><circle cx="12.5" cy="6" r="1.7"/><circle cx="7.5" cy="14" r="1.7"/></svg>
+        设置
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-footer">
+        <div class="row"><span class="dot"></span><span>遥控器引擎运行中</span></div>
+        <div class="meta">Sidecar · 本地进程</div>
+        <div class="mini-rule"></div>
+        <div class="kv"><span>在线设备</span><b>3 / 3</b></div>
+        <div class="kv"><span>刷新间隔</span><b>15 s</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>鼠标</h1>
+          <div class="page-subline">
+            <span class="device-name">G304</span>
+            <span class="chip ok"><span class="dot"></span>已连接</span>
+            <span class="chip muted">HID++</span>
+            <span class="chip warn"><span class="dot"></span>电量低</span>
+          </div>
+        </div>
+        <div class="page-actions"><span class="quiet">写入前请确认电量</span><button class="btn secondary">刷新</button></div>
+      </div>
+
+      <section class="panel mouse-hero">
+        <div class="art-plate mouse-art art-mouse"><img src="../../src/DeviceCenterPreview.App/Assets/Devices/g304.png" alt="G304 鼠标"></div>
+        <div class="mouse-hero-main">
+          <div class="mouse-hero-top">
+            <div><div class="field-label">性能摘要</div><h2>G304</h2></div>
+            <span class="hero-note">LIGHTSPEED · HID++</span>
+          </div>
+          <div class="mouse-metrics">
+            <div class="mouse-metric"><span>当前 DPI</span><strong>1000</strong><em>档位 3 / 5</em></div>
+            <div class="mouse-metric"><span>轮询率</span><strong>1000<small> Hz</small></strong><em>低延迟模式</em></div>
+            <div class="mouse-metric"><span>板载配置</span><strong>开</strong><em>写入鼠标</em></div>
+          </div>
+        </div>
+        <div class="low-battery">
+          <div class="low-battery-title"><span class="dot amber"></span>电量 20%</div>
+          <p>建议先充电再写入；低电量写入可能失败。</p>
+        </div>
+      </section>
+
+      <div class="mouse-grid">
+        <section class="panel performance-panel">
+          <div class="panel-head"><h2>性能</h2><span class="meta">修改后点“应用设置”</span></div>
+
+          <div class="dpi-block">
+            <div class="dpi-head"><span class="field-label">DPI</span><div class="dpi-value">1000<small>DPI</small></div></div>
+            <div class="dpi-slider"><div class="dpi-fill"></div><div class="dpi-thumb"></div></div>
+            <div class="dpi-scale"><span>200</span><span>12000</span></div>
+          </div>
+
+          <div class="polling-row">
+            <div class="row-copy"><span class="field-label">轮询率</span><span class="field-help">越高越跟手，也更耗电</span></div>
+            <div class="select small">1000 Hz<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+          </div>
+
+          <div class="stage-head"><span class="field-label">DPI 档位</span><span class="field-help">点击档位切换</span></div>
+          <div class="stage-grid">
+            <button class="stage"><span>400</span><em>档位 1</em></button>
+            <button class="stage"><span>800</span><em>档位 2</em></button>
+            <button class="stage current"><span>1000</span><em>档位 3</em></button>
+            <button class="stage"><span>1600</span><em>档位 4</em></button>
+            <button class="stage"><span>3200</span><em>档位 5</em></button>
+          </div>
+        </section>
+
+        <section class="panel mouse-device-panel">
+          <div class="panel-head"><h2>设备</h2><span class="chip muted">G304</span></div>
+          <div class="mouse-kv">
+            <div class="kv-row"><span>型号</span><b>G304</b></div>
+            <div class="kv-row"><span>连接</span><b>LIGHTSPEED</b></div>
+            <div class="kv-row"><span>电量</span><b class="value-warn">20%</b></div>
+          </div>
+          <div class="profile-field">
+            <span class="field-label">配置名称</span>
+            <div class="textbox">PROFILE_NAME_DEFAULT</div>
+          </div>
+          <div class="onboard-row">
+            <div class="row-copy"><strong>板载配置</strong><span class="field-help">开启后由鼠标固件执行</span></div>
+            <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+          </div>
+          <div class="mouse-tip">按键由板载配置决定；只读状态以设备返回为准。</div>
+        </section>
+      </div>
+
+      <section class="panel mapping-panel">
+        <div class="panel-head">
+          <div class="mapping-title"><h2>按键映射</h2><span class="chip muted">设备返回 6 个</span></div>
+          <span class="meta">按设备顺序</span>
+        </div>
+        <div class="map-grid">
+          <div class="map-cell"><span class="map-key">左键</span><span class="map-value">左键点击<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+          <div class="map-cell"><span class="map-key">右键</span><span class="map-value">右键点击<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+          <div class="map-cell"><span class="map-key">中键</span><span class="map-value">中键点击<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+          <div class="map-cell"><span class="map-key">后退</span><span class="map-value">后退<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+          <div class="map-cell"><span class="map-key">前进</span><span class="map-value">前进<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+          <div class="map-cell"><span class="map-key">DPI</span><span class="map-value">DPI 切换<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></span></div>
+        </div>
+        <div class="map-note"><span>数量与顺序由鼠标板载配置决定；不同型号的按键名不同。</span><span class="faint">只读时整表禁用并说明原因</span></div>
+      </section>
+
+      <div class="apply-bar">
+        <div class="save-state"><span class="dot amber"></span>有未应用的修改</div>
+        <div class="apply-actions"><button class="btn secondary">刷新鼠标</button><button class="btn primary">应用设置</button></div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

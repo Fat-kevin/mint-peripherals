@@ -1,0 +1,510 @@
+<Page
+    x:Class="DeviceCenterPreview.App.Views.MousePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:DeviceCenterPreview.App.Controls"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer x:Name="PageScroll"
+                  HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
+        <StackPanel x:Name="PageContent" Padding="36,28,36,24" Spacing="28"
+                    HorizontalAlignment="Stretch">
+
+            <!-- 仪表区：实物图浮空 + 电量环 + 固定行高读数条 -->
+            <StackPanel Spacing="0">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Width="128" Height="112">
+                        <Image x:Name="MouseHeroImage"
+                               Source="ms-appx:///Assets/Devices/g304.png"
+                               MaxHeight="108" Stretch="Uniform"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <FontIcon x:Name="MouseHeroIcon" Glyph="{StaticResource AppIconMouseGlyph}"
+                                  FontSize="48" Visibility="Collapsed"
+                                  Foreground="{ThemeResource AppMouseBrush}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock x:Name="TitleText" Text="鼠标"
+                                   Style="{StaticResource AppPageTitleStyle}" />
+                        <TextBlock x:Name="SubtitleText"
+                                   Style="{StaticResource AppPageSubtitleStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+                        <ComboBox x:Name="DeviceCombo"
+                                  MinWidth="260" Margin="0,6,0,0" HorizontalAlignment="Left"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  Style="{StaticResource AppComboBoxStyle}"
+                                  SelectionChanged="DeviceCombo_SelectionChanged" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                        <controls:BatteryRing x:Name="MouseRing" Size="84"
+                                              RingBrush="{ThemeResource AppMouseBrush}" />
+                        <TextBlock Text="电量" Style="{StaticResource AppCardLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Border Height="1" Margin="0,20" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" HorizontalAlignment="Center">
+                        <TextBlock Text="DPI" Style="{StaticResource AppCardLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock x:Name="HeroDpiText" FontSize="26" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="1" Height="36"
+                            Background="{ThemeResource AppBorderSubtleBrush}"
+                            VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="2" Spacing="2" HorizontalAlignment="Center">
+                        <TextBlock Text="轮询率" Style="{StaticResource AppCardLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Center">
+                            <TextBlock x:Name="HeroPollingText" FontSize="26" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                            <TextBlock Text="Hz" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource AppTextTertiaryBrush}"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Grid.Column="3" Width="1" Height="36"
+                            Background="{ThemeResource AppBorderSubtleBrush}"
+                            VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="4" Spacing="2" HorizontalAlignment="Center">
+                        <TextBlock Text="板载配置" Style="{StaticResource AppCardLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock x:Name="HeroModeText" FontSize="26" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+
+            <Border x:Name="ControlBanner"
+                    Style="{StaticResource AppStatusBannerStyle}"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="ControlBannerText"
+                           Style="{StaticResource AppCardFootnoteStyle}"
+                           TextWrapping="Wrap" TextTrimming="None" />
+            </Border>
+
+            <Grid x:Name="InfoGrid" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="PerformanceColumn" Width="2*" />
+                    <ColumnDefinition x:Name="DeviceColumn" Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border x:Name="PerformanceCard" Grid.Column="0" Style="{StaticResource AppCardStyle}">
+                    <StackPanel Spacing="18">
+                        <TextBlock Text="性能" Style="{StaticResource AppSectionTitleStyle}" />
+
+                        <StackPanel Spacing="6">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="DpiLabel" Text="当前 DPI" Style="{StaticResource AppCardLabelStyle}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock x:Name="DpiValueText" Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource AppNumericMediumStyle}" />
+                            </Grid>
+                            <Slider x:Name="DpiSlider"
+                                    Style="{StaticResource AppSliderStyle}"
+                                    Minimum="400"
+                                    Maximum="8000"
+                                    StepFrequency="100"
+                                    ValueChanged="Dpi_ValueChanged" />
+                            <TextBlock x:Name="DpiHintText"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None"
+                                       Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="轮询率" Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="PollingCombo"
+                                          MinWidth="150"
+                                          Style="{StaticResource AppComboBoxStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="当前档位" Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="StageIndexCombo"
+                                          MinWidth="120"
+                                          Style="{StaticResource AppComboBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="DPI 档位" Style="{StaticResource AppSectionTitleStyle}" />
+
+                        <Grid x:Name="DpiStagePanel" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="1" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBox x:Name="StageBox1" PlaceholderText="0"
+                                             Style="{StaticResource AppTextBoxStyle}"
+                                             TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="2" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBox x:Name="StageBox2" PlaceholderText="0"
+                                             Style="{StaticResource AppTextBoxStyle}"
+                                             TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="3" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBox x:Name="StageBox3" PlaceholderText="0"
+                                             Style="{StaticResource AppTextBoxStyle}"
+                                             TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="3" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="4" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBox x:Name="StageBox4" PlaceholderText="0"
+                                             Style="{StaticResource AppTextBoxStyle}"
+                                             TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="4" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="5" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBox x:Name="StageBox5" PlaceholderText="0"
+                                             Style="{StaticResource AppTextBoxStyle}"
+                                             TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Text="0 表示未使用该档位；写入后设备会回读校验。"
+                                   Style="{StaticResource AppCardFootnoteStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ToggleSwitch x:Name="OnboardToggle"
+                                          Header="板载配置"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Toggled="Onboard_Toggled" />
+                            <TextBlock x:Name="ProfileInfoText" Grid.Column="1"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None" />
+                        </Grid>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="配置名称" Style="{StaticResource AppCardLabelStyle}" />
+                            <TextBox x:Name="ProfileNameBox" MaxLength="24"
+                                     Style="{StaticResource AppTextBoxStyle}"
+                                     PlaceholderText="PROFILE_NAME_DEFAULT" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="DeviceInfoCard" Grid.Column="1" Style="{StaticResource AppCardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="设备信息" Style="{StaticResource AppSectionTitleStyle}" />
+                        <TextBlock x:Name="DeviceInfoText"
+                                   Style="{StaticResource AppCardFootnoteStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" LineHeight="22" />
+                        <Border Height="1" Background="{ThemeResource AppBorderSubtleBrush}" />
+                        <TextBlock Text="当前版本只对罗技 HID++ 鼠标开放读写；未支持的设备会明确标注，不会伪造可用。"
+                                   Style="{StaticResource AppCardFootnoteStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource AppCardStyle}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="按键映射" Style="{StaticResource AppSectionTitleStyle}" />
+                        <TextBlock x:Name="ButtonCountText" Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Style="{StaticResource AppCardFootnoteStyle}" />
+                    </Grid>
+
+                    <ScrollViewer x:Name="ButtonMappingScroll"
+                                  HorizontalScrollMode="Disabled"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <Grid x:Name="ButtonMappingPanel" ColumnSpacing="16" RowSpacing="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="0" />
+                            </Grid.RowDefinitions>
+
+                            <Grid x:Name="ButtonRow1" Grid.Row="0" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel1" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo1" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow2" Grid.Row="0" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel2" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo2" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow3" Grid.Row="1" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel3" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo3" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow4" Grid.Row="1" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel4" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo4" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow5" Grid.Row="2" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel5" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo5" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow6" Grid.Row="2" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel6" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo6" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow7" Grid.Row="3" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel7" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo7" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow8" Grid.Row="3" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel8" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo8" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow9" Grid.Row="4" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel9" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo9" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow10" Grid.Row="4" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel10" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo10" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow11" Grid.Row="5" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel11" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo11" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow12" Grid.Row="5" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel12" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo12" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow13" Grid.Row="6" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel13" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo13" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow14" Grid.Row="6" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel14" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo14" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow15" Grid.Row="7" Grid.Column="0"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel15" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo15" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                            <Grid x:Name="ButtonRow16" Grid.Row="7" Grid.Column="1"
+                                  ColumnSpacing="10" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ButtonLabel16" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardLabelStyle}" />
+                                <ComboBox x:Name="ButtonCombo16" Grid.Column="1"
+                                          Style="{StaticResource AppComboBoxStyle}"
+                                          DisplayMemberPath="Label" SelectedValuePath="Id" />
+                            </Grid>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <TextBlock x:Name="ButtonMappingEmpty"
+                               Style="{StaticResource AppCardFootnoteStyle}"
+                               TextWrapping="Wrap" TextTrimming="None" />
+                    <TextBlock x:Name="ButtonMappingHint"
+                               Style="{StaticResource AppCardFootnoteStyle}"
+                               TextWrapping="Wrap" TextTrimming="None" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="16,12">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SaveStatus" Grid.Column="0" VerticalAlignment="Center"
+                               Style="{StaticResource AppCardFootnoteStyle}"
+                               TextWrapping="Wrap" TextTrimming="None"
+                               Text="修改后点击「应用设置」写入设备。" />
+                    <Button x:Name="RefreshButton" Grid.Column="1" Content="刷新鼠标"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Click="Refresh_Click" />
+                    <Button x:Name="ApplyButton" Grid.Column="2" Content="应用设置"
+                            Style="{StaticResource AppPrimaryButtonStyle}"
+                            Click="Apply_Click" />
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

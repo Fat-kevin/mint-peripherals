@@ -1,0 +1,103 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
+    <RootNamespace>DeviceCenterPreview.App</RootNamespace>
+    <Version>1.0.3</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\PeripheralHub.ico</ApplicationIcon>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.260224002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+    <PackageReference Include="System.Reactive" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Devices\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Devices\Logitech\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PeripheralHub.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PeripheralHub.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PeripheralHub-16.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PeripheralHub-24.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PeripheralHub-32.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeviceCenterPreview.Core\DeviceCenterPreview.Core.csproj" />
+    <ProjectReference Include="..\..\external\VigilWatt.Core\VigilWatt.Core.csproj" />
+    <ProjectReference Include="..\..\external\YuandaoTws.Domain\YuandaoTws.Domain.csproj" />
+    <ProjectReference Include="..\..\external\YuandaoTws.Application\YuandaoTws.Application.csproj" />
+    <ProjectReference Include="..\..\external\YuandaoTws.Infrastructure\YuandaoTws.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopySayallEngine" AfterTargets="Build">
+    <ItemGroup>
+      <SayallEngine Include="..\..\sidecars\sayall-engine\target\release\sayall-engine.exe"
+                    Condition="Exists('..\..\sidecars\sayall-engine\target\release\sayall-engine.exe')" />
+      <SayallEngine Include="..\..\sidecars\sayall-engine\target\debug\sayall-engine.exe"
+                    Condition="!Exists('..\..\sidecars\sayall-engine\target\release\sayall-engine.exe') And Exists('..\..\sidecars\sayall-engine\target\debug\sayall-engine.exe')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SayallEngine)" DestinationFolder="$(OutDir)sidecars" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopySayallEngineToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <SayallEnginePublish Include="..\..\sidecars\sayall-engine\target\release\sayall-engine.exe"
+                           Condition="Exists('..\..\sidecars\sayall-engine\target\release\sayall-engine.exe')" />
+      <SayallEnginePublish Include="..\..\sidecars\sayall-engine\target\debug\sayall-engine.exe"
+                           Condition="!Exists('..\..\sidecars\sayall-engine\target\release\sayall-engine.exe') And Exists('..\..\sidecars\sayall-engine\target\debug\sayall-engine.exe')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SayallEnginePublish)" DestinationFolder="$(PublishDir)sidecars" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- RC003 音量键/返回键需要管理员 Helper；载荷必须随应用一起发布，不能依赖
+       开发机上的旧版安装。安装器会把它放到稳定的 Helper 目录并注册计划任务。 -->
+  <Target Name="CopyRc003Helper" AfterTargets="Build">
+    <ItemGroup>
+      <Rc003HelperPayload Include="..\..\vendor\rc003-helper\x64\sayall-helper.exe" />
+      <Rc003HelperPayload Include="..\..\vendor\rc003-helper\x64\frida-gadget.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Rc003HelperPayload)" DestinationFolder="$(OutDir)helper" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyRc003HelperToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <Rc003HelperPayloadPublish Include="..\..\vendor\rc003-helper\x64\sayall-helper.exe" />
+      <Rc003HelperPayloadPublish Include="..\..\vendor\rc003-helper\x64\frida-gadget.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Rc003HelperPayloadPublish)" DestinationFolder="$(PublishDir)helper" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

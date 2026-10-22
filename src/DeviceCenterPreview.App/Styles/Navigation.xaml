@@ -1,0 +1,43 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#212B25" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#28332C" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#20433A" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#26493F" />
+            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#A3B5AD" />
+            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#E9F2ED" />
+            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#3CCFA5" />
+            <SolidColorBrush x:Key="NavigationViewItemBorderBrushSelected" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#3CCFA5" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#0C110E" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#101613" />
+            <SolidColorBrush x:Key="NavigationViewItemSeparatorForeground" Color="#222B26" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#EAF3EE" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#DFEDE5" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#D8F1E6" />
+            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#CDEBD9" />
+            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#4B6159" />
+            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#182620" />
+            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#0A6B4F" />
+            <SolidColorBrush x:Key="NavigationViewItemBorderBrushSelected" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#0E9A76" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#EEF3F0" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#F5F8F6" />
+            <SolidColorBrush x:Key="NavigationViewItemSeparatorForeground" Color="#E7EEEA" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <Style x:Key="AppNavigationViewItemStyle" TargetType="NavigationViewItem">
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Margin" Value="10,1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{ThemeResource AppTextSecondaryBrush}" />
+    </Style>
+</ResourceDictionary>

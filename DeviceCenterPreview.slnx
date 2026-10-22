@@ -1,0 +1,19 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj" />
+    <Project Path="src/DeviceCenterPreview.Core/DeviceCenterPreview.Core.csproj" />
+  </Folder>
+  <Folder Name="/external/">
+    <Project Path="external/VigilWatt.Core/VigilWatt.Core.csproj" />
+    <Project Path="external/YuandaoTws.Domain/YuandaoTws.Domain.csproj" />
+    <Project Path="external/YuandaoTws.Application/YuandaoTws.Application.csproj" />
+    <Project Path="external/YuandaoTws.Infrastructure/YuandaoTws.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeviceCenterPreview.Core.Tests/DeviceCenterPreview.Core.Tests.csproj" />
+  </Folder>
+</Solution>

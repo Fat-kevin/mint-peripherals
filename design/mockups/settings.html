@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>外设中枢 · 设置</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="screens.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="title-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><span>外设中枢</span></div>
+    <div class="title-drag"></div>
+    <div class="win-actions">
+      <button class="win-btn" aria-label="最小化"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn disabled" aria-label="最大化不可用"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="2.5" y="2.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn close" aria-label="关闭"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><div><div class="name">外设中枢</div><div class="sub">桌面设备控制台</div></div></div>
+      <div class="nav-section">设备</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+        设备中心
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+        耳机<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.2" y="2.8" width="9.6" height="14.4" rx="4.8"/><path d="M10 6v4"/></svg>
+        鼠标<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2.5" width="7" height="15" rx="2"/><circle cx="10" cy="7.2" r="1.8"/><path d="M7.7 12.5h4.6M10 11.2v2.6"/></svg>
+        遥控器<span class="nav-state"></span>
+      </a>
+      <div class="nav-section">系统</div>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8M14 6h3M3 14h3M9 14h8"/><circle cx="12.5" cy="6" r="1.7"/><circle cx="7.5" cy="14" r="1.7"/></svg>
+        设置
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-footer">
+        <div class="row"><span class="dot"></span><span>遥控器引擎运行中</span></div>
+        <div class="meta">Sidecar · 本地进程</div>
+        <div class="mini-rule"></div>
+        <div class="kv"><span>在线设备</span><b>3 / 3</b></div>
+        <div class="kv"><span>刷新间隔</span><b>15 s</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>设置</h1>
+          <div class="page-subline">
+            <span>修改后立即保存；模块关闭后停止对应扫描。</span>
+            <span class="chip muted">仅本机</span>
+          </div>
+        </div>
+        <div class="page-actions"><span class="quiet">配置保存在 AppData</span><button class="btn secondary">打开配置目录</button></div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-col">
+          <section class="panel settings-panel modules-panel">
+            <div class="panel-head"><h2>模块</h2><span class="meta">关闭即停止扫描</span></div>
+            <div class="setting-rows">
+              <div class="setting-row">
+                <div class="setting-copy"><strong>耳机</strong><span>SPP 扫描与连接</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-copy"><strong>鼠标</strong><span>HID++ 会话与轮询</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-copy"><strong>遥控器</strong><span>Rust 引擎与按键监听</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-copy"><strong>常驻电量监控</strong><span>后台发现与电量采样</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel settings-panel notify-panel">
+            <div class="panel-head"><h2>通知</h2><span class="meta">系统通知</span></div>
+            <div class="setting-rows compact-rows">
+              <div class="setting-row compact">
+                <div class="setting-copy"><strong>设备连接时</strong><span>新设备上线提醒</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row compact">
+                <div class="setting-copy"><strong>电量偏低时</strong><span>低于阈值提醒</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row compact">
+                <div class="setting-copy"><strong>写入失败时</strong><span>保留失败原因</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+            </div>
+            <div class="threshold-row">
+              <div class="setting-copy"><strong>低电量阈值</strong><span>0 表示不按阈值提醒</span></div>
+              <div class="select small threshold-select">20 %<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="settings-col">
+          <section class="panel settings-panel write-panel">
+            <div class="panel-head"><h2>写入授权</h2><span class="meta">先读后写</span></div>
+            <div class="setting-rows">
+              <div class="setting-row">
+                <div class="setting-copy"><strong>允许耳机写入</strong><span>ANC、EQ、快捷开关</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-copy"><strong>允许鼠标写入</strong><span>DPI、轮询率、板载配置</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-copy"><strong>允许遥控器写入</strong><span>映射、音频、语音工具</span></div>
+                <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+              </div>
+            </div>
+            <div class="write-note">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 9v4M10 6.4v.2"/></svg>
+              <span>关闭后服务层直接拒绝写入并说明原因，不只是把按钮变灰。</span>
+            </div>
+          </section>
+
+          <section class="panel settings-panel backup-panel">
+            <div class="panel-head"><h2>备份与恢复</h2><span class="meta">本机文件</span></div>
+            <p class="backup-desc">备份包含本应用设置与遥控器配置；导入前会校验清单。</p>
+            <div class="backup-row">
+              <div class="select small backup-select">选择备份文件<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+              <button class="btn secondary small">导出备份</button>
+            </div>
+            <div class="backup-row">
+              <button class="btn secondary small">导入选中备份</button>
+              <button class="btn ghost small danger">恢复默认设置</button>
+              <button class="btn ghost small">打开备份目录</button>
+            </div>
+            <div class="backup-status"><span class="dot muted"></span>尚无备份；导出的文件只保存在本机。</div>
+          </section>
+        </div>
+      </div>
+
+      <footer class="settings-footer panel">
+        <div class="diag-copy">
+          <h2>诊断</h2>
+          <span>诊断包含状态摘要与已脱敏日志，不含设备地址、语音内容或输入文本。</span>
+        </div>
+        <div class="diag-actions">
+          <button class="btn secondary small">导出诊断包</button>
+          <button class="btn ghost small">打开日志目录</button>
+        </div>
+        <span class="config-path">settings.json</span>
+      </footer>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>外设中枢 · 耳机</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="screens.css">
+  <link rel="stylesheet" href="headset.css">
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="title-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><span>外设中枢</span></div>
+    <div class="title-drag"></div>
+    <div class="win-actions">
+      <button class="win-btn" aria-label="最小化"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn disabled" aria-label="最大化不可用"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="2.5" y="2.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn close" aria-label="关闭"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><div><div class="name">外设中枢</div><div class="sub">桌面设备控制台</div></div></div>
+      <div class="nav-section">设备</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+        设备中心
+      </a>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+        耳机<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.2" y="2.8" width="9.6" height="14.4" rx="4.8"/><path d="M10 6v4"/></svg>
+        鼠标<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2.5" width="7" height="15" rx="2"/><circle cx="10" cy="7.2" r="1.8"/><path d="M7.7 12.5h4.6M10 11.2v2.6"/></svg>
+        遥控器<span class="nav-state"></span>
+      </a>
+      <div class="nav-section">系统</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8M14 6h3M3 14h3M9 14h8"/><circle cx="12.5" cy="6" r="1.7"/><circle cx="7.5" cy="14" r="1.7"/></svg>
+        设置
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-footer">
+        <div class="row"><span class="dot"></span><span>遥控器引擎运行中</span></div>
+        <div class="meta">Sidecar · 本地进程</div>
+        <div class="mini-rule"></div>
+        <div class="kv"><span>在线设备</span><b>3 / 3</b></div>
+        <div class="kv"><span>刷新间隔</span><b>15 s</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>耳机</h1>
+          <div class="page-subline">
+            <span class="device-name">OriG in</span>
+            <span class="chip ok"><span class="dot"></span>已连接</span>
+            <span class="chip muted">SPP</span>
+            <span class="chip muted">固件 1.0.8</span>
+          </div>
+        </div>
+        <div class="page-actions"><span class="quiet">修改后自动保存</span><button class="btn secondary">重新连接</button></div>
+      </div>
+
+      <section class="panel hero-headset">
+        <div class="art-plate hero-art art-headset">
+          <img class="bud-left" src="../../src/DeviceCenterPreview.App/Assets/Devices/yuandao-left.png" alt="">
+          <img class="bud-right" src="../../src/DeviceCenterPreview.App/Assets/Devices/yuandao-right.png" alt="OriG in 耳机">
+        </div>
+        <div class="hero-main">
+          <div class="hero-top">
+            <div><div class="field-label">设备电量</div><h2>OriG in</h2></div>
+            <span class="hero-note">3 路电池 · 刚刚更新</span>
+          </div>
+          <div class="hero-batteries">
+            <div class="battery" style="--level:96%;--color:#57d3a0">
+              <div class="battery-head"><span class="battery-label">左耳</span><div class="battery-value"><span class="battery-num">96</span><span class="battery-unit">%</span></div></div>
+              <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+            </div>
+            <div class="battery" style="--level:100%;--color:#57d3a0">
+              <div class="battery-head"><span class="battery-label">右耳</span><div class="battery-value"><span class="battery-num">100</span><span class="battery-unit">%</span></div></div>
+              <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+            </div>
+            <div class="battery" style="--level:100%;--color:#57d3a0">
+              <div class="battery-head"><span class="battery-label">充电盒</span><div class="battery-value"><span class="battery-num">100</span><span class="battery-unit">%</span></div></div>
+              <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-side">
+          <div class="field-label">查找</div>
+          <button class="btn primary">查找耳机</button>
+          <p>播放提示音 5 秒，可随时取消</p>
+          <div class="side-state"><span class="dot"></span>连接稳定</div>
+        </div>
+      </section>
+
+      <div class="two-col">
+        <section class="panel sound-panel">
+          <div class="panel-head"><h2>声音</h2><span class="meta">修改后自动保存</span></div>
+          <div class="selectors">
+            <div class="field">
+              <span class="field-label">降噪模式</span>
+              <div class="select">深度<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+              <span class="field-help">关闭、通透、普通、深度、实验性、风噪</span>
+            </div>
+            <div class="field">
+              <span class="field-label">EQ 预设</span>
+              <div class="select">均衡中正<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+              <span class="field-help">7 个预设，立即写入耳机</span>
+            </div>
+          </div>
+
+          <div class="panel-subhead">快捷开关</div>
+          <div class="toggle-grid">
+            <div class="toggle-row">
+              <div class="toggle-copy"><strong>游戏模式</strong><span>降低音画延迟</span></div>
+              <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-copy"><strong>低延迟</strong><span>优先缩短传输间隔</span></div>
+              <div class="switch-wrap"><span class="switch-label">关</span><span class="switch"></span></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-copy"><strong>双设备连接</strong><span>电脑与手机之间切换</span></div>
+              <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-copy"><strong>入耳检测</strong><span>摘下暂停，戴上继续</span></div>
+              <div class="switch-wrap"><span class="switch-label">开</span><span class="switch on"></span></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-copy"><strong>抗风噪</strong><span>户外通话更清楚</span></div>
+              <div class="switch-wrap"><span class="switch-label">关</span><span class="switch"></span></div>
+            </div>
+            <div class="toggle-row ghost-row"></div>
+          </div>
+          <div class="sound-note">
+            <strong>降噪模式说明</strong>
+            <p>深度适合通勤，通透保留环境声；切换会立即写入耳机。</p>
+          </div>
+          <div class="snd-foot">开关状态来自耳机；页面每 15 秒刷新一次。</div>
+        </section>
+
+        <section class="panel device-panel">
+          <div class="panel-head"><h2>设备</h2><span class="chip ok"><span class="dot"></span>已连接</span></div>
+          <div class="device-state">
+            <div class="state-icon">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+            </div>
+            <div class="state-copy"><strong>SPP 通道</strong><span>耳机控制已就绪</span></div>
+            <span class="chip ok">正常</span>
+          </div>
+          <div class="kv-list">
+            <div class="kv-row"><span>型号</span><b>OriG in</b></div>
+            <div class="kv-row"><span>固件</span><b>1.0.8</b></div>
+            <div class="kv-row"><span>连接方式</span><b>SPP</b></div>
+            <div class="kv-row"><span>左耳 / 右耳</span><b>96% / 100%</b></div>
+            <div class="kv-row"><span>充电盒</span><b>100%</b></div>
+          </div>
+          <div class="tip">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 9v4M10 6.4v.2"/></svg>
+            <span>连接异常时先重新连接；仍失败再重启耳机。</span>
+          </div>
+          <div class="device-actions">
+            <button class="btn secondary">重新连接</button>
+            <button class="btn ghost">断开连接</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[package]
+name = "sayall-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sayall-windows = { path = "../../external/rust/crates/sayall-windows" }
+sayall-core = { path = "../../external/rust/crates/sayall-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[workspace]

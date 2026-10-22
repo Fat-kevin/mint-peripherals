@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>外设中枢 · 设备中心</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="title-brand">
+      <img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt="">
+      <span>外设中枢</span>
+    </div>
+    <div class="title-drag"></div>
+    <div class="win-actions">
+      <button class="win-btn" aria-label="最小化"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn disabled" aria-label="最大化不可用"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="2.5" y="2.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn close" aria-label="关闭"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-brand">
+        <img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt="">
+        <div>
+          <div class="name">外设中枢</div>
+          <div class="sub">桌面设备控制台</div>
+        </div>
+      </div>
+
+      <div class="nav-section">设备</div>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+        设备中心
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+        耳机
+        <span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.2" y="2.8" width="9.6" height="14.4" rx="4.8"/><path d="M10 6v4"/></svg>
+        鼠标
+        <span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2.5" width="7" height="15" rx="2"/><circle cx="10" cy="7.2" r="1.8"/><path d="M7.7 12.5h4.6M10 11.2v2.6"/></svg>
+        遥控器
+        <span class="nav-state"></span>
+      </a>
+
+      <div class="nav-section">系统</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8M14 6h3M3 14h3M9 14h8"/><circle cx="12.5" cy="6" r="1.7"/><circle cx="7.5" cy="14" r="1.7"/></svg>
+        设置
+      </a>
+
+      <div class="nav-spacer"></div>
+
+      <div class="nav-footer">
+        <div class="row">
+          <span class="dot"></span>
+          <span>遥控器引擎运行中</span>
+        </div>
+        <div class="meta">Sidecar · 本地进程</div>
+        <div class="mini-rule"></div>
+        <div class="kv"><span>在线设备</span><b>3 / 3</b></div>
+        <div class="kv"><span>刷新间隔</span><b>15 s</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>设备中心</h1>
+          <div class="page-subline">3 台设备在线，最低电量 20%</div>
+        </div>
+        <div class="page-actions">
+          <span class="quiet">刚刚同步</span>
+          <button class="btn secondary">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 9a6 6 0 1 1-1.8-4.3M16 4v5h-5"/></svg>
+            刷新
+          </button>
+        </div>
+      </div>
+
+      <section class="status-rail panel">
+        <div class="rail-title">
+          <div class="field-label">连接状态</div>
+          <strong>3 / 3 在线</strong>
+        </div>
+        <div class="rail-nodes">
+          <div class="rail-node">
+            <span class="node-dot" style="--node:#b49cff"></span>
+            <div class="node-copy"><b>OriG in</b><span>SPP 已连接</span></div>
+          </div>
+          <div class="rail-node">
+            <span class="node-dot" style="--node:#e09a63"></span>
+            <div class="node-copy"><b>G304</b><span>HID++ 已连接</span></div>
+          </div>
+          <div class="rail-node">
+            <span class="node-dot" style="--node:#5fd6c5"></span>
+            <div class="node-copy"><b>MI RC</b><span>引擎运行中</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-head">
+        <h2>设备通道</h2>
+        <span class="meta">按设备类型排列</span>
+      </div>
+
+      <div class="channels">
+        <article class="channel" style="--accent:#b49cff">
+          <div class="channel-art art-plate art-headset"><img src="../../src/DeviceCenterPreview.App/Assets/Devices/yuandao-left.png" alt="OriG in 耳机"></div>
+          <div class="channel-body">
+            <div class="channel-id">
+              <div class="channel-titleline">
+                <h3>OriG in</h3>
+                <span class="chip ok"><span class="dot"></span>已连接</span>
+              </div>
+              <div class="channel-meta">耳机 · SPP</div>
+              <div class="channel-facts"><span class="fact">深度降噪</span><span class="fact">双设备 开</span></div>
+            </div>
+            <div class="channel-battery">
+              <div class="battery compact" style="--level:100%;--color:#57d3a0">
+                <div class="battery-head"><span class="battery-label">电量</span><div class="battery-value"><span class="battery-num">100</span><span class="battery-unit">%</span></div></div>
+                <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+              </div>
+            </div>
+            <div class="channel-action"><button class="btn secondary small">打开<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg></button></div>
+          </div>
+        </article>
+
+        <article class="channel" style="--accent:#e09a63">
+          <div class="channel-art art-plate art-mouse"><img src="../../src/DeviceCenterPreview.App/Assets/Devices/g304.png" alt="G304 鼠标"></div>
+          <div class="channel-body">
+            <div class="channel-id">
+              <div class="channel-titleline">
+                <h3>G304</h3>
+                <span class="chip ok"><span class="dot"></span>已连接</span>
+              </div>
+              <div class="channel-meta">鼠标 · HID++</div>
+              <div class="channel-facts"><span class="fact">1000 DPI</span><span class="fact">1000 Hz</span></div>
+            </div>
+            <div class="channel-battery">
+              <div class="battery compact" style="--level:20%;--color:#e0a15b">
+                <div class="battery-head"><span class="battery-label">电量 <span class="chip warn" style="height:18px;padding:0 6px;font-size:9.5px">低</span></span><div class="battery-value"><span class="battery-num">20</span><span class="battery-unit">%</span></div></div>
+                <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+              </div>
+            </div>
+            <div class="channel-action"><button class="btn secondary small">打开<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg></button></div>
+          </div>
+        </article>
+
+        <article class="channel" style="--accent:#5fd6c5">
+          <div class="channel-art art-plate art-remote"><img src="../../src/DeviceCenterPreview.App/Assets/Devices/rc003.png" alt="MI RC 遥控器"></div>
+          <div class="channel-body">
+            <div class="channel-id">
+              <div class="channel-titleline">
+                <h3>MI RC</h3>
+                <span class="chip ok"><span class="dot"></span>已连接</span>
+              </div>
+              <div class="channel-meta">遥控器 · Sidecar</div>
+              <div class="channel-facts"><span class="fact">13 键映射</span><span class="fact">语音链路正常</span></div>
+            </div>
+            <div class="channel-battery">
+              <div class="battery compact" style="--level:89%;--color:#57d3a0">
+                <div class="battery-head"><span class="battery-label">电量</span><div class="battery-value"><span class="battery-num">89</span><span class="battery-unit">%</span></div></div>
+                <div class="battery-track"><div class="battery-fill"></div><div class="battery-ticks"></div></div>
+              </div>
+            </div>
+            <div class="channel-action"><button class="btn secondary small">打开<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg></button></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="hub-lower">
+        <section class="panel quick-panel">
+          <div class="panel-head">
+            <h2>快捷操作</h2>
+            <span class="meta">不用进入设备页</span>
+          </div>
+          <div class="quick-grid">
+            <button class="quick-tile" style="--q-accent:#b49cff">
+              <svg class="q-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8v4h3l4 3V5L7 8H4z"/><path d="M14 7.5a3.5 3.5 0 0 1 0 5"/></svg>
+              <strong>查找耳机</strong>
+              <span>播放提示音，5 秒后停止</span>
+              <svg class="q-arrow" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg>
+            </button>
+            <button class="quick-tile" style="--q-accent:#e09a63">
+              <svg class="q-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="5.5"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3"/><circle cx="10" cy="10" r="1.4"/></svg>
+              <strong>鼠标 DPI</strong>
+              <span>跳到常用档位</span>
+              <svg class="q-arrow" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg>
+            </button>
+            <button class="quick-tile" style="--q-accent:#5fd6c5">
+              <svg class="q-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h2M15 10h2M10 3v2M10 15v2"/><circle cx="10" cy="10" r="4"/><path d="M7.5 10a2.5 2.5 0 0 1 5 0"/></svg>
+              <strong>接收测试</strong>
+              <span>检查遥控器按键信号</span>
+              <svg class="q-arrow" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5l5 5-5 5"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel health-panel">
+          <div class="panel-head">
+            <h2>通道健康</h2>
+            <span class="chip ok" style="height:20px;font-size:10px"><span class="dot"></span>正常</span>
+          </div>
+          <div class="health-list">
+            <div class="health-row"><span class="dot" style="--dot:#b49cff"></span><span class="health-name">耳机服务</span><span class="health-desc">SPP 通道</span><span class="health-state">正常</span></div>
+            <div class="health-row"><span class="dot" style="--dot:#e09a63"></span><span class="health-name">鼠标服务</span><span class="health-desc">HID++ 通道</span><span class="health-state">正常</span></div>
+            <div class="health-row"><span class="dot" style="--dot:#5fd6c5"></span><span class="health-name">遥控器引擎</span><span class="health-desc">Sidecar</span><span class="health-state">正常</span></div>
+          </div>
+          <div class="health-note">未接入的能力会标注原因，不显示伪造数值。</div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

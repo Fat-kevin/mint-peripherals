@@ -1,0 +1,253 @@
+<Page
+    x:Class="DeviceCenterPreview.App.Views.HeadsetPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:DeviceCenterPreview.App.Controls"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer x:Name="PageScroll"
+                  HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
+        <StackPanel x:Name="PageContent" Padding="36,28,36,24" Spacing="28"
+                    HorizontalAlignment="Stretch">
+
+            <!-- 仪表区：页头 + 三枚分量实物图与电量环（共享固定行高，逐行对齐） -->
+            <StackPanel Spacing="0">
+                <Grid ColumnSpacing="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock x:Name="TitleText" Text="耳机"
+                                   Style="{StaticResource AppPageTitleStyle}" />
+                        <TextBlock x:Name="SubtitleText"
+                                   Style="{StaticResource AppPageSubtitleStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+                    </StackPanel>
+                    <Button x:Name="FindButton" Grid.Column="1" Content="查找耳机"
+                            Style="{StaticResource AppPrimaryButtonStyle}"
+                            VerticalAlignment="Center"
+                            Click="Find_Click" />
+                </Grid>
+
+                <Border Height="1" Margin="0,20" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="80" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="18" />
+                            </Grid.RowDefinitions>
+                            <Image Grid.Row="0" Source="ms-appx:///Assets/Devices/yuandao-left.png"
+                                   MaxHeight="76" Stretch="Uniform"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <controls:BatteryRing x:Name="LeftRing" Grid.Row="2" Size="64"
+                                                  RingBrush="{ThemeResource AppHeadsetBrush}"
+                                                  HorizontalAlignment="Center" />
+                            <TextBlock Grid.Row="4" Text="左耳" Style="{StaticResource AppCardLabelStyle}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock x:Name="LeftCharging" Grid.Row="6"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="80" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="18" />
+                            </Grid.RowDefinitions>
+                            <Image Grid.Row="0" Source="ms-appx:///Assets/Devices/yuandao-right.png"
+                                   MaxHeight="76" Stretch="Uniform"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <controls:BatteryRing x:Name="RightRing" Grid.Row="2" Size="64"
+                                                  RingBrush="{ThemeResource AppHeadsetBrush}"
+                                                  HorizontalAlignment="Center" />
+                            <TextBlock Grid.Row="4" Text="右耳" Style="{StaticResource AppCardLabelStyle}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RightCharging" Grid.Row="6"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="80" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="18" />
+                            </Grid.RowDefinitions>
+                            <Image Grid.Row="0" Source="ms-appx:///Assets/Devices/yuandao-case.png"
+                                   MaxHeight="76" Stretch="Uniform"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <controls:BatteryRing x:Name="CaseRing" Grid.Row="2" Size="64"
+                                                  RingBrush="{ThemeResource AppHeadsetBrush}"
+                                                  HorizontalAlignment="Center" />
+                            <TextBlock Grid.Row="4" Text="充电盒" Style="{StaticResource AppCardLabelStyle}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock x:Name="CaseCharging" Grid.Row="6"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock x:Name="SaveStatus" Margin="0,16,0,0"
+                           Style="{StaticResource AppCardFootnoteStyle}"
+                           TextWrapping="Wrap" TextTrimming="None" />
+            </StackPanel>
+
+            <Border x:Name="ControlBanner"
+                    Style="{StaticResource AppStatusBannerStyle}"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="ControlBannerText"
+                           Style="{StaticResource AppCardFootnoteStyle}"
+                           TextWrapping="Wrap" TextTrimming="None" />
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource AppCardStyle}">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="降噪与音效" Style="{StaticResource AppSectionTitleStyle}" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border x:Name="AncPanel" Grid.Column="0" Style="{StaticResource AppInnerPanelStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="降噪模式" Style="{StaticResource AppCardLabelStyle}" />
+                                    <ComboBox x:Name="AncCombo" HorizontalAlignment="Stretch"
+                                              PlaceholderText="未接入"
+                                              Style="{StaticResource AppComboBoxStyle}"
+                                              SelectionChanged="Anc_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="EqPanel" Grid.Column="1" Style="{StaticResource AppInnerPanelStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="EQ 预设" Style="{StaticResource AppCardLabelStyle}" />
+                                    <ComboBox x:Name="EqCombo" HorizontalAlignment="Stretch"
+                                              PlaceholderText="未接入"
+                                              Style="{StaticResource AppComboBoxStyle}"
+                                              SelectionChanged="Eq_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Text="快捷开关" Style="{StaticResource AppSectionTitleStyle}" />
+
+                        <Grid ColumnSpacing="24" RowSpacing="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ToggleSwitch x:Name="GameModeSwitch" Header="游戏模式"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Grid.Row="0" Grid.Column="0"
+                                          Toggled="Toggle_Changed" />
+                            <ToggleSwitch x:Name="LowLatencySwitch" Header="低延迟"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Grid.Row="0" Grid.Column="1"
+                                          Toggled="Toggle_Changed" />
+                            <ToggleSwitch x:Name="DualDeviceSwitch" Header="双设备连接"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Grid.Row="1" Grid.Column="0"
+                                          Toggled="Toggle_Changed" />
+                            <ToggleSwitch x:Name="InEarSwitch" Header="入耳检测"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Grid.Row="1" Grid.Column="1"
+                                          Toggled="Toggle_Changed" />
+                            <ToggleSwitch x:Name="WindNoiseSwitch" Header="抗风噪"
+                                          Style="{StaticResource AppToggleSwitchStyle}"
+                                          Grid.Row="2" Grid.Column="0"
+                                          Toggled="Toggle_Changed" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource AppCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="连接与固件" Style="{StaticResource AppSectionTitleStyle}" />
+
+                        <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="连接状态" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBlock x:Name="HeadsetStateText" Grid.Column="1"
+                                               Style="{StaticResource AppCardLabelStyle}"
+                                               Foreground="{ThemeResource AppHeadsetBrush}" />
+                                </Grid>
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="固件" Style="{StaticResource AppCardLabelStyle}" />
+                                    <TextBlock x:Name="HeadsetFirmwareText" Grid.Column="1"
+                                               Style="{StaticResource AppCardLabelStyle}"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="150" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="读取与写入走 SPP。控制通道未接入时，本页按钮会禁用并显示原因，不会伪造状态。"
+                                   Style="{StaticResource AppCardFootnoteStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+
+                        <Border Height="1" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="电量读数" Style="{StaticResource AppCardLabelStyle}" />
+                            <TextBlock Text="三枚电量分别对应左耳、右耳与充电盒；充电中会以闪电标记。"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

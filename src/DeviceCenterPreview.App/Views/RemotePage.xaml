@@ -1,0 +1,315 @@
+<Page
+    x:Class="DeviceCenterPreview.App.Views.RemotePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:DeviceCenterPreview.App.Controls"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer x:Name="PageScroll"
+                  HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
+        <StackPanel x:Name="PageContent" Padding="36,28,36,24" Spacing="28"
+                    HorizontalAlignment="Stretch">
+            <!-- 仪表区：实物图浮空 + 电量环 + 链路操作 + 扫描行 -->
+            <StackPanel Spacing="0">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Width="96" Height="112">
+                        <Image Source="ms-appx:///Assets/Devices/rc003.png"
+                               MaxHeight="108" Stretch="Uniform"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock x:Name="TitleText" Text="遥控器"
+                                   Style="{StaticResource AppPageTitleStyle}" />
+                        <TextBlock x:Name="SubtitleText"
+                                   Style="{StaticResource AppPageSubtitleStyle}"
+                                   TextWrapping="Wrap" TextTrimming="None" />
+                        <ComboBox x:Name="DeviceCombo"
+                                  MinWidth="260" Margin="0,6,0,0" HorizontalAlignment="Left"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  Style="{StaticResource AppComboBoxStyle}"
+                                  SelectionChanged="DeviceCombo_SelectionChanged" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                        <controls:BatteryRing x:Name="RemoteRing" Size="84"
+                                              RingBrush="{ThemeResource AppRemoteBrush}" />
+                        <TextBlock Text="电量" Style="{StaticResource AppCardLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Spacing="8" VerticalAlignment="Center">
+                        <Button x:Name="ConnectButton" Content="连接" MinWidth="104"
+                                Style="{StaticResource AppPrimaryButtonStyle}"
+                                Click="Connect_Click" />
+                        <Button x:Name="DisconnectButton" Content="断开" MinWidth="104"
+                                Style="{StaticResource AppSecondaryButtonStyle}"
+                                Click="Disconnect_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <Border Height="1" Margin="0,20" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="ScanButton" Content="扫描已配对遥控器"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Click="Scan_Click" />
+                    <ComboBox x:Name="ScanCombo" Grid.Column="1"
+                              MinWidth="260" MaxWidth="340"
+                              PlaceholderText="扫描结果"
+                              DisplayMemberPath="DisplayName"
+                              Style="{StaticResource AppComboBoxStyle}" />
+                    <TextBlock x:Name="ScanStatus" Grid.Column="2" VerticalAlignment="Center"
+                               Style="{StaticResource AppCardFootnoteStyle}"
+                               Text="尚未扫描"
+                               TextWrapping="Wrap" TextTrimming="None" />
+                </Grid>
+            </StackPanel>
+
+            <Border x:Name="ControlBanner"
+                    Style="{StaticResource AppStatusBannerStyle}"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="ControlBannerText"
+                           Style="{StaticResource AppCardFootnoteStyle}"
+                           TextWrapping="Wrap" TextTrimming="None" />
+            </Border>
+
+            <Border Style="{StaticResource AppCardStyle}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="3">
+                            <TextBlock Text="按键映射" Style="{StaticResource AppSectionTitleStyle}" />
+                            <TextBlock Text="点击图片热点或表格单元格，在右侧就地编辑；保存后写入遥控器映射。"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="单击 / 双击 / 长按"
+                                   VerticalAlignment="Center"
+                                   Style="{StaticResource AppCardFootnoteStyle}" />
+                    </Grid>
+
+                    <Grid x:Name="MappingGrid" ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="PhotoColumn" Width="220" />
+                            <ColumnDefinition x:Name="TableColumn" Width="*" />
+                            <ColumnDefinition Width="300" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel x:Name="PhotoPanel" Grid.Column="0" Spacing="10">
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="遥控器按键" Style="{StaticResource AppCardLabelStyle}" />
+                                    <Canvas x:Name="PhotoCanvas" Width="200" Height="406"
+                                            HorizontalAlignment="Center">
+                                        <Image Source="ms-appx:///Assets/Devices/rc003.png"
+                                               Width="200" Height="406" Stretch="Fill" />
+                                    </Canvas>
+                                </StackPanel>
+                            </Border>
+                            <Button x:Name="ReceiveTestButton"
+                                    Content="开始接收测试（10 秒）"
+                                    HorizontalAlignment="Stretch"
+                                    Style="{StaticResource AppSecondaryButtonStyle}"
+                                    Click="ReceiveTest_Click" />
+                            <TextBlock x:Name="ReceiveStatus"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None"
+                                       Text="测试只确认按键信号是否到达电脑，不执行动作。" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="MappingCenterPanel" Grid.Column="1" Spacing="8">
+                            <Grid ColumnSpacing="8" Margin="6,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="64" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="按键" Style="{StaticResource AppCardFootnoteStyle}" />
+                                <TextBlock Grid.Column="1" Text="单击" Style="{StaticResource AppCardFootnoteStyle}" />
+                                <TextBlock Grid.Column="2" Text="双击" Style="{StaticResource AppCardFootnoteStyle}" />
+                                <TextBlock Grid.Column="3" Text="长按" Style="{StaticResource AppCardFootnoteStyle}" />
+                                <TextBlock Grid.Column="4" Text="接收" Style="{StaticResource AppCardFootnoteStyle}" />
+                            </Grid>
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="10">
+                                <StackPanel x:Name="MappingTablePanel" Spacing="2" />
+                            </Border>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MappingSaveStatus"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardFootnoteStyle}"
+                                           TextWrapping="Wrap" TextTrimming="None" />
+                                <HyperlinkButton Grid.Column="1" Content="打开配置文件夹"
+                                                 VerticalAlignment="Center"
+                                                 Click="OpenConfigFolder_Click" />
+                            </Grid>
+                        </StackPanel>
+
+                        <Border Grid.Column="2" Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                            <StackPanel x:Name="MappingRightPanel" Spacing="10">
+                                <Border x:Name="ActionEditorCard"
+                                        Style="{StaticResource AppInnerPanelStyle}"
+                                        Visibility="Collapsed">
+                                    <StackPanel x:Name="ActionEditorPanel" Spacing="10" />
+                                </Border>
+
+                                <TextBlock x:Name="SelectedKeyTitle"
+                                           Style="{StaticResource AppCardTitleStyle}" />
+                                <StackPanel x:Name="GesturePanel" Spacing="6" />
+                                <TextBlock Text="试运行（不写入）" Style="{StaticResource AppCardLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Content="单击" Tag="single" Click="TestGesture_Click"
+                                            Style="{StaticResource AppSecondaryButtonStyle}"
+                                            Padding="10,5" FontSize="12" />
+                                    <Button Content="双击" Tag="double" Click="TestGesture_Click"
+                                            Style="{StaticResource AppSecondaryButtonStyle}"
+                                            Padding="10,5" FontSize="12" />
+                                    <Button Content="长按" Tag="long" Click="TestGesture_Click"
+                                            Style="{StaticResource AppSecondaryButtonStyle}"
+                                            Padding="10,5" FontSize="12" />
+                                </StackPanel>
+                                <TextBlock Text="选择手势后可在此处替换动作；所有变更都会保存到映射文件。"
+                                           Style="{StaticResource AppCardFootnoteStyle}"
+                                           TextWrapping="Wrap" TextTrimming="None" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource AppCardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="语音与增益" Style="{StaticResource AppSectionTitleStyle}" />
+
+                    <Grid ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="12">
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="音频路由" Style="{StaticResource AppCardLabelStyle}" />
+                                    <ComboBox x:Name="AudioCombo"
+                                              HorizontalAlignment="Stretch"
+                                              PlaceholderText="未接入"
+                                              DisplayMemberPath="Name"
+                                              Style="{StaticResource AppComboBoxStyle}"
+                                              SelectionChanged="Audio_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="语音工具" Style="{StaticResource AppCardLabelStyle}" />
+                                    <ComboBox x:Name="ToolCombo"
+                                              HorizontalAlignment="Stretch"
+                                              PlaceholderText="未选择"
+                                              Style="{StaticResource AppComboBoxStyle}"
+                                              SelectionChanged="Tool_SelectionChanged">
+                                        <ComboBoxItem Content="豆包" Tag="doubao" />
+                                        <ComboBoxItem Content="微信输入法" Tag="wechat" />
+                                        <ComboBoxItem Content="Vokie" Tag="vokie" />
+                                        <ComboBoxItem Content="其他" Tag="other" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="ToolHintCard" Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                                <StackPanel Spacing="4">
+                                    <TextBlock x:Name="ToolHintTitle" Style="{StaticResource AppCardTitleStyle}" />
+                                    <TextBlock x:Name="HotkeyText" Style="{StaticResource AppCardFootnoteStyle}"
+                                               TextWrapping="Wrap" TextTrimming="None" />
+                                    <TextBlock x:Name="ToolHintText" Style="{StaticResource AppCardFootnoteStyle}"
+                                               TextWrapping="Wrap" TextTrimming="None" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="12">
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="麦克风增益" Style="{StaticResource AppCardLabelStyle}" />
+                                        <TextBlock x:Name="GainValueText" Grid.Column="1"
+                                                   Style="{StaticResource AppCardTitleStyle}" />
+                                    </Grid>
+                                    <Slider x:Name="GainSlider"
+                                            Style="{StaticResource AppSliderStyle}"
+                                            Minimum="0" Maximum="24" StepFrequency="1"
+                                            ValueChanged="Gain_ValueChanged" />
+                                    <TextBlock Text="引擎上限 24 dB；页面不回读旧值，移动滑块后再应用。"
+                                               Style="{StaticResource AppCardFootnoteStyle}"
+                                               TextWrapping="Wrap" TextTrimming="None" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button x:Name="VoiceTestButton" Content="语音状态"
+                                                Style="{StaticResource AppSecondaryButtonStyle}"
+                                                Click="VoiceTest_Click" />
+                                        <TextBlock x:Name="VoiceStatus" VerticalAlignment="Center"
+                                                   Style="{StaticResource AppCardLabelStyle}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
+                                <StackPanel Spacing="4">
+                                    <ToggleSwitch x:Name="FullKeySwitch"
+                                                  HorizontalAlignment="Stretch"
+                                                  Style="{StaticResource AppToggleSwitchStyle}"
+                                                  Toggled="FullKey_Toggled" />
+                                    <TextBlock Text="当前版本不可用时仍会显示原因，不假装支持。"
+                                               Style="{StaticResource AppCardFootnoteStyle}"
+                                               TextWrapping="Wrap" TextTrimming="None" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock x:Name="InputStatus"
+                                       Style="{StaticResource AppCardFootnoteStyle}"
+                                       TextWrapping="Wrap" TextTrimming="None" />
+
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="ApplyButton" Content="应用增益"
+                                        Style="{StaticResource AppSecondaryButtonStyle}"
+                                        Click="Apply_Click" />
+                                <TextBlock x:Name="SaveStatus" Grid.Column="1" VerticalAlignment="Center"
+                                           Style="{StaticResource AppCardFootnoteStyle}"
+                                           TextWrapping="Wrap" TextTrimming="None" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Style="{StaticResource AppCardFootnoteStyle}"
+                               TextWrapping="Wrap" TextTrimming="None"
+                               Text="语音链路依赖 VB-CABLE：渲染端点选 CABLE Input，输入法麦克风选 CABLE Output。全按键开启时可能需要管理员 Helper。" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

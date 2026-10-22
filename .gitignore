@@ -1,0 +1,32 @@
+# 构建产物
+bin/
+obj/
+publish/
+dist/
+TestResults/
+
+# Rust sidecar
+sidecars/**/target/
+
+# 日志与转储
+*.log
+*.dmp
+
+# IDE / 用户文件
+.vs/
+*.user
+*.suo
+
+# 助手/工具元数据
+.workbuddy/
+.workbuddy-ai/
+.zcode/
+# 验证截图与本地产物（README 用的已复制到 docs/screenshots）
+.artifacts/
+.dsh/
+build.log
+# Rust 构建树（external/rust 为 rc003 源码，target 为本地构建产物）
+external/rust/target/
+
+# rc003 Helper 二进制载荷（本地构建产物：cargo 构建后生成，LICENSE/README 保留入库）
+vendor/rc003-helper/x64/

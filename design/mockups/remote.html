@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>外设中枢 · 遥控器</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="screens.css">
+  <link rel="stylesheet" href="remote.css">
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="title-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><span>外设中枢</span></div>
+    <div class="title-drag"></div>
+    <div class="win-actions">
+      <button class="win-btn" aria-label="最小化"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn disabled" aria-label="最大化不可用"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="2.5" y="2.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+      <button class="win-btn close" aria-label="关闭"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-brand"><img src="../../src/DeviceCenterPreview.App/Assets/PeripheralHub-32.png" alt=""><div><div class="name">外设中枢</div><div class="sub">桌面设备控制台</div></div></div>
+      <div class="nav-section">设备</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+        设备中心
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V9a6 6 0 0 1 12 0v3"/><rect x="2.6" y="11.2" width="3.2" height="5.8" rx="1.2"/><rect x="14.2" y="11.2" width="3.2" height="5.8" rx="1.2"/></svg>
+        耳机<span class="nav-state"></span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.2" y="2.8" width="9.6" height="14.4" rx="4.8"/><path d="M10 6v4"/></svg>
+        鼠标<span class="nav-state"></span>
+      </a>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6.5" y="2.5" width="7" height="15" rx="2"/><circle cx="10" cy="7.2" r="1.8"/><path d="M7.7 12.5h4.6M10 11.2v2.6"/></svg>
+        遥控器<span class="nav-state"></span>
+      </a>
+      <div class="nav-section">系统</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8M14 6h3M3 14h3M9 14h8"/><circle cx="12.5" cy="6" r="1.7"/><circle cx="7.5" cy="14" r="1.7"/></svg>
+        设置
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-footer">
+        <div class="row"><span class="dot"></span><span>遥控器引擎运行中</span></div>
+        <div class="meta">Sidecar · 本地进程</div>
+        <div class="mini-rule"></div>
+        <div class="kv"><span>在线设备</span><b>3 / 3</b></div>
+        <div class="kv"><span>刷新间隔</span><b>15 s</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>遥控器</h1>
+          <div class="page-subline">
+            <span class="device-name">MI RC</span>
+            <span class="chip ok"><span class="dot"></span>已连接</span>
+            <span class="chip muted">89% 电量</span>
+          </div>
+        </div>
+        <div class="page-actions"><span class="quiet">修改后自动保存</span><button class="btn secondary">刷新</button></div>
+      </div>
+
+      <section class="panel conn-bar">
+        <div class="conn-device">
+          <span class="field-label">设备</span>
+          <div class="select small conn-select">MI RC<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8l4 4 4-4"/></svg></div>
+        </div>
+        <div class="conn-state"><span class="dot"></span>引擎运行中<span class="faint">，映射自动保存</span></div>
+        <div class="conn-actions">
+          <button class="btn secondary small">扫描已配对</button>
+          <button class="btn ghost small">断开</button>
+        </div>
+      </section>
+
+      <div class="remote-grid">
+        <section class="panel keymap-panel">
+          <div class="panel-head"><h2>按键图</h2><span class="chip muted">13 键</span></div>
+          <div class="remote-art art-plate art-remote">
+            <div class="remote-figure">
+              <img src="../../src/DeviceCenterPreview.App/Assets/Devices/rc003.png" alt="MI RC 遥控器按键图">
+              <span class="hotspot" style="--x:37.6%;--y:10.5%"></span>
+              <span class="hotspot" style="--x:49.9%;--y:18.6%"></span>
+              <span class="hotspot" style="--x:36.2%;--y:24.3%"></span>
+              <span class="hotspot" style="--x:40.2%;--y:38.3%"></span>
+              <span class="hotspot" style="--x:40.2%;--y:47.0%"></span>
+              <span class="hotspot" style="--x:40.2%;--y:55.8%"></span>
+              <span class="hotspot" style="--x:63.8%;--y:24.3%"></span>
+              <span class="hotspot selected" style="--x:49.9%;--y:24.3%"></span>
+              <span class="hotspot" style="--x:49.9%;--y:30.3%"></span>
+              <span class="hotspot" style="--x:59.4%;--y:38.4%"></span>
+              <span class="hotspot" style="--x:59.4%;--y:46.6%"></span>
+              <span class="hotspot" style="--x:59.4%;--y:55.8%"></span>
+            </div>
+          </div>
+          <div class="keymap-foot"><span class="dot"></span>已选：确定<span class="faint">圆点是可点击按键</span></div>
+        </section>
+
+        <section class="panel selected-panel">
+          <div class="panel-head"><h2>当前按键</h2><span class="chip ok"><span class="dot"></span>已设置</span></div>
+          <div class="selected-title"><h2>确定</h2><span>3 个手势</span></div>
+          <div class="gesture-list">
+            <div class="gesture-row">
+              <span class="gesture-name">单击</span>
+              <span class="gesture-action">确定</span>
+              <button class="btn ghost small">修改</button>
+            </div>
+            <div class="gesture-row">
+              <span class="gesture-name">双击</span>
+              <span class="gesture-action">播放 / 暂停</span>
+              <button class="btn ghost small">修改</button>
+            </div>
+            <div class="gesture-row">
+              <span class="gesture-name">长按</span>
+              <span class="gesture-action muted-value">未设置</span>
+              <button class="btn secondary small">分配</button>
+            </div>
+          </div>
+          <div class="gesture-test">
+            <span class="field-label">试执行</span>
+            <div class="test-actions"><button class="btn secondary small">单击</button><button class="btn secondary small">双击</button><button class="btn secondary small">长按</button></div>
+          </div>
+          <div class="selected-note">试执行只验证动作，不向电脑注入按键。</div>
+        </section>
+
+        <section class="panel voice-panel">
+          <div class="panel-head"><h2>语音链路</h2><span class="chip ok"><span class="dot"></span>正常</span></div>
+          <div class="voice-kv">
+            <div class="voice-row"><span>音频端点</span><b>CABLE Output</b></div>
+            <div class="voice-row"><span>按住语音键</span><b class="kbd">右 Alt</b></div>
+            <div class="voice-row"><span>全按键支持</span><div class="switch-wrap"><span class="switch-label">关</span><span class="switch"></span></div></div>
+          </div>
+          <div class="voice-tip">
+            <strong>VB-CABLE</strong>
+            <p>渲染端点选 CABLE Input，麦克风选 CABLE Output。全按键支持可能需要管理员 Helper。</p>
+          </div>
+          <button class="btn secondary voice-btn">打开声音设置</button>
+        </section>
+      </div>
+
+      <section class="panel mapping-table-panel">
+        <div class="table-head-row">
+          <div><h2>全部映射</h2><span class="meta">13 个按键 / 39 个映射</span></div>
+          <div class="filter-tabs"><span class="filter active">全部</span><span class="filter">已设置</span><span class="filter">未设置</span></div>
+        </div>
+        <div class="mapping-head"><span>按键</span><span>单击</span><span>双击</span><span>长按</span><span>接收</span></div>
+        <div class="mapping-rows">
+          <div class="mapping-row"><span class="mapping-key">电源</span><span class="map-cell-value set">长按关机</span><span class="map-cell-value">禁用</span><span class="map-cell-value">禁用</span><span class="receive">—</span></div>
+          <div class="mapping-row"><span class="mapping-key">上</span><span class="map-cell-value set">方向上</span><span class="map-cell-value">禁用</span><span class="map-cell-value">禁用</span><span class="receive">—</span></div>
+          <div class="mapping-row"><span class="mapping-key">左</span><span class="map-cell-value set">方向左</span><span class="map-cell-value">禁用</span><span class="map-cell-value">禁用</span><span class="receive">—</span></div>
+          <div class="mapping-row selected"><span class="mapping-key">确定</span><span class="map-cell-value set">确定</span><span class="map-cell-value set">播放 / 暂停</span><span class="map-cell-value">未设置</span><span class="receive">—</span></div>
+        </div>
+        <div class="table-foot"><span>滚动查看全部 13 个按键</span><span class="faint">点击单元格直接修改</span></div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

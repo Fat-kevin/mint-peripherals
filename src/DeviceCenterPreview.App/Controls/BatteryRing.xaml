@@ -1,0 +1,34 @@
+<UserControl
+    x:Class="DeviceCenterPreview.App.Controls.BatteryRing"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="RingRoot">
+        <Ellipse x:Name="Track"
+                 Fill="Transparent"
+                 Stroke="{ThemeResource AppBorderSubtleBrush}" />
+
+        <Path x:Name="Arc"
+              Fill="Transparent"
+              StrokeStartLineCap="Round"
+              StrokeEndLineCap="Round"
+              StrokeLineJoin="Round" />
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock x:Name="Number"
+                       Text="—"
+                       FontWeight="SemiBold"
+                       Foreground="{ThemeResource AppTextPrimaryBrush}" />
+            <TextBlock x:Name="PercentSign"
+                       Text="%"
+                       FontWeight="SemiBold"
+                       Foreground="{ThemeResource AppTextTertiaryBrush}"
+                       VerticalAlignment="Top" />
+        </StackPanel>
+
+        <FontIcon x:Name="ChargeMark"
+                  Glyph="&#xE945;"
+                  Visibility="Collapsed"
+                  Foreground="{ThemeResource AppWarningBrush}" />
+    </Grid>
+</UserControl>

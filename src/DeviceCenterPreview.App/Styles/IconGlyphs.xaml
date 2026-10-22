@@ -1,0 +1,17 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="AppIconHubGlyph">&#xE80F;</x:String>
+    <x:String x:Key="AppIconHeadsetGlyph">&#xE7F6;</x:String>
+    <x:String x:Key="AppIconMouseGlyph">&#xE962;</x:String>
+    <x:String x:Key="AppIconRemoteGlyph">&#xE7FC;</x:String>
+    <x:String x:Key="AppIconSettingsGlyph">&#xE713;</x:String>
+    <x:String x:Key="AppIconRefreshGlyph">&#xE72C;</x:String>
+    <x:String x:Key="AppIconChevronRightGlyph">&#xE76C;</x:String>
+    <x:String x:Key="AppIconPowerGlyph">&#xE7E8;</x:String>
+    <x:String x:Key="AppIconSearchGlyph">&#xE721;</x:String>
+    <x:String x:Key="AppIconLinkGlyph">&#xE71B;</x:String>
+    <x:String x:Key="AppIconBatteryGlyph">&#xE83F;</x:String>
+    <x:String x:Key="AppIconAlertGlyph">&#xE7BA;</x:String>
+    <x:String x:Key="AppIconCheckGlyph">&#xE73E;</x:String>
+</ResourceDictionary>
