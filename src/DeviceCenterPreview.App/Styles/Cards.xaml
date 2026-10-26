@@ -2,32 +2,44 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- 去外框（用户明确否定一切边框盒）：区块直接放在画布上，
-         靠标题、留白与细分隔线组织。唯一例外：输入控件自带极浅填充。 -->
+    <!-- Mint Paper：内容回到白色纸面。卡片 = 纸面 + 1px 极浅边 + 18 圆角，
+         靠层次与留白组织，不再把内容裸放在画布上。 -->
     <Style x:Key="AppCardStyle" TargetType="Border">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{x:Null}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="Padding" Value="4,0,4,0" />
+        <Setter Property="Background" Value="{ThemeResource AppPaperGradientBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="Padding" Value="22" />
     </Style>
 
-    <Style x:Key="AppHeroCardStyle" TargetType="Border" BasedOn="{StaticResource AppCardStyle}" />
+    <Style x:Key="AppHeroCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource AppHeroGradientBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="Padding" Value="26" />
+    </Style>
 
-    <!-- 内层分组：透明，无白底方块；输入控件自带白底外观 -->
+    <!-- 内层分组：浅一档的内嵌面，放输入组/表格，和纸面区分开 -->
     <Style x:Key="AppInnerPanelStyle" TargetType="Border">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{ThemeResource AppInsetBrush}" />
         <Setter Property="BorderBrush" Value="{x:Null}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="14" />
     </Style>
 
-    <Style x:Key="AppKpiCardStyle" TargetType="Border" BasedOn="{StaticResource AppInnerPanelStyle}" />
+    <Style x:Key="AppKpiCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource AppInsetBrush}" />
+        <Setter Property="BorderBrush" Value="{x:Null}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
 
     <Style x:Key="AppStatusChipStyle" TargetType="Border">
         <Setter Property="CornerRadius" Value="999" />
-        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="Padding" Value="10,4" />
         <Setter Property="Background" Value="{ThemeResource AppHoverBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -36,25 +48,26 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{ThemeResource AppBorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
-        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="Padding" Value="4,14" />
     </Style>
 
     <Style x:Key="AppBatteryBarStyle" TargetType="ProgressBar">
-        <Setter Property="Height" Value="4" />
+        <Setter Property="Height" Value="6" />
         <Setter Property="Minimum" Value="0" />
         <Setter Property="Maximum" Value="100" />
-        <Setter Property="Background" Value="{ThemeResource AppBorderSubtleBrush}" />
+        <Setter Property="Background" Value="{ThemeResource AppRingTrackBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource AppSuccessBrush}" />
         <Setter Property="IsIndeterminate" Value="False" />
     </Style>
 
+    <!-- 设备卡：纸面卡，悬停抬起（描边变薄荷 + 纸面微亮） -->
     <Style x:Key="AppDeviceCardButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{x:Null}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="16" />
-        <Setter Property="Padding" Value="24" />
-        <Setter Property="MinHeight" Value="280" />
+        <Setter Property="Background" Value="{ThemeResource AppPaperGradientBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="26" />
+        <Setter Property="MinHeight" Value="320" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -78,14 +91,14 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="Card.Background" Value="{ThemeResource AppHoverBrush}" />
-                                        <Setter Target="Card.BorderBrush" Value="{ThemeResource AppBorderStrongBrush}" />
+                                        <Setter Target="Card.Background" Value="{ThemeResource AppRaisedBrush}" />
+                                        <Setter Target="Card.BorderBrush" Value="{ThemeResource AppCardHoverBorderBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="Card.Background" Value="{ThemeResource AppPressedBrush}" />
-                                        <Setter Target="Card.BorderBrush" Value="{ThemeResource AppBorderStrongBrush}" />
+                                        <Setter Target="Card.Background" Value="{ThemeResource AppHoverBrush}" />
+                                        <Setter Target="Card.BorderBrush" Value="{ThemeResource AppIonBorderBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
@@ -117,26 +130,27 @@
         <Setter Property="Background" Value="{ThemeResource AppWarningTintBrush}" />
         <Setter Property="BorderBrush" Value="{x:Null}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="14,12" />
     </Style>
 
-    <!-- 控制台面板：开放式区块，无外框，内部用刻度线分隔 -->
     <Style x:Key="AppConsolePanelStyle" TargetType="Border">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{x:Null}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="{ThemeResource AppPaperGradientBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="Padding" Value="22" />
     </Style>
 
-    <!-- 通道按钮：面板内的一列，透明底、悬停浮现，整列可点击 -->
+    <!-- 通道按钮：设备中心的一张纸面卡，整卡可点 -->
     <Style x:Key="AppChannelButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{ThemeResource AppPaperGradientBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
-        <Setter Property="Padding" Value="16,20" />
-        <Setter Property="MinHeight" Value="300" />
-        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="24,26" />
+        <Setter Property="MinHeight" Value="340" />
+        <Setter Property="CornerRadius" Value="22" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -147,6 +161,8 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Channel"
                             Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{TemplateBinding CornerRadius}"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter
@@ -158,12 +174,14 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="Channel.Background" Value="{ThemeResource AppHoverBrush}" />
+                                        <Setter Target="Channel.Background" Value="{ThemeResource AppRaisedBrush}" />
+                                        <Setter Target="Channel.BorderBrush" Value="{ThemeResource AppCardHoverBorderBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="Channel.Background" Value="{ThemeResource AppPressedBrush}" />
+                                        <Setter Target="Channel.Background" Value="{ThemeResource AppHoverBrush}" />
+                                        <Setter Target="Channel.BorderBrush" Value="{ThemeResource AppIonBorderBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
@@ -179,9 +197,9 @@
         </Setter>
     </Style>
 
-    <!-- 大号仪表读数：仪器面板上的数字 -->
     <Style x:Key="AppGaugeNumberStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
+        <Setter Property="FontSize" Value="32" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
     </Style>

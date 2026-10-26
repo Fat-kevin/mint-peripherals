@@ -306,9 +306,9 @@ internal sealed class LogitechMouseService : IDisposable
                     }
                 }
 
-                // 板载模式下 DPI/轮询由 profile 携带（上面已写入），
-                // 主机寄存器直写只在目标为主机模式时执行。
-                if (controls.Dpi is int dpi && !controls.OnboardMode)
+                // DPI 直写：主机模式下就是最终值；板载模式下 profile 只决定「下次加载」的
+                // 默认档位，必须再发一次 setSensorDpi，鼠标才会立刻切到用户选的档位。
+                if (controls.Dpi is int dpi)
                 {
                     if (_dpiOptions.Count > 0 && !_dpiOptions.Contains(dpi))
                     {
@@ -318,7 +318,23 @@ internal sealed class LogitechMouseService : IDisposable
                     var result = WriteDpi(dpi);
                     if (!result.Ok)
                     {
-                        return result;
+                        if (!controls.OnboardMode)
+                        {
+                            return result;
+                        }
+
+                        // 固件拒绝直写：切一次板载模式，让固件重新加载刚写入的 profile（默认档位）。
+                        AppLog.Warn("mouse onboard dpi write rejected: " + result.Message + " -> reload profile");
+                        var offResult = SetOnboardMode(false);
+                        var onResult = offResult.Ok ? SetOnboardMode(true) : offResult;
+                        if (!onResult.Ok)
+                        {
+                            return WriteResult.Fail("板载配置已写入，但设备拒绝切换 DPI：" + result.Message);
+                        }
+                    }
+                    else
+                    {
+                        AppLog.Info($"mouse dpi applied dpi={dpi} onboard={controls.OnboardMode}");
                     }
                 }
 

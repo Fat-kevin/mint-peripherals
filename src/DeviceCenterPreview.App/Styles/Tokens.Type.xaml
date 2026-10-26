@@ -5,10 +5,19 @@
     <FontFamily x:Key="AppDisplayFont">Segoe UI Variable Display</FontFamily>
     <FontFamily x:Key="AppTextFont">Segoe UI</FontFamily>
 
+    <Style x:Key="AppOverlineStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="LineHeight" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="CharacterSpacing" Value="80" />
+        <Setter Property="Foreground" Value="{ThemeResource AppTextTertiaryBrush}" />
+    </Style>
+
     <Style x:Key="AppPageTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
-        <Setter Property="FontSize" Value="28" />
-        <Setter Property="LineHeight" Value="34" />
+        <Setter Property="FontSize" Value="34" />
+        <Setter Property="LineHeight" Value="40" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -32,7 +41,7 @@
 
     <Style x:Key="AppCardTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
-        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontSize" Value="16" />
         <Setter Property="LineHeight" Value="20" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
@@ -67,8 +76,8 @@
 
     <Style x:Key="AppBatteryStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
-        <Setter Property="FontSize" Value="34" />
-        <Setter Property="LineHeight" Value="40" />
+        <Setter Property="FontSize" Value="40" />
+        <Setter Property="LineHeight" Value="46" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
     </Style>
@@ -77,8 +86,8 @@
 
     <Style x:Key="AppNumericMediumStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="LineHeight" Value="30" />
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="LineHeight" Value="32" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
     </Style>

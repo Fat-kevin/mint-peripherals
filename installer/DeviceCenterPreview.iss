@@ -1,5 +1,5 @@
-#define MyAppName "薄荷外设"
-#define MyAppVersion "1.0.6"
+﻿#define MyAppName "薄荷外设"
+#define MyAppVersion "1.0.7"
 #define MyAppPublisher "Peripheral Hub"
 #define MyAppExeName "DeviceCenterPreview.App.exe"
 
@@ -29,7 +29,7 @@ CloseApplications=yes
 RestartApplications=no
 AppMutex=DeviceCenterPreview_SingleInstance
 SetupLogging=yes
-VersionInfoVersion=1.0.6.0
+VersionInfoVersion=1.0.7.0
 VersionInfoDescription={#MyAppName} 安装程序
 VersionInfoProductName={#MyAppName}
 VersionInfoCompany={#MyAppPublisher}

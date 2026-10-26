@@ -1,4 +1,4 @@
-# UI 视觉系统（Mint Studio / 薄荷工作室）
+﻿# UI 视觉系统（Mint Studio / 薄荷工作室）
 
 > 2026-10-22 第三轮：用户否定了暖色"铜台"（"很 AI、很腻"），全面转向
 > **小清新浅色薄荷**，并**去卡片化**——内容直接放在画布上，靠留白与
@@ -17,34 +17,42 @@
 
 - **状态标记 = 彩色圆点 + 同色文字**（StatusChip）：7px 圆点 + 13px SemiBold
   文字，无底无框；Live 状态加 14px 淡色光环。
-- **开关 = 自绘胶囊**：44×24 圆角轨道 + 18px 滑块（悬停放大 20、按下 16），
-  140ms 二次缓动滑动；开=薄荷，关=灰绿；无描边；不渲染「开/关」赘字。
-  模板契约（从 WinUI generic.xaml 实测）：VSM **必须挂在模板根元素**
-  （GoToState 只查根）；CommonStates=Normal/PointerOver/Pressed/Disabled，
-  ToggleStates=Dragging/Off/On；属性切换用 ObjectAnimationUsingKeyFrames。
+- **开关 = 系统 ToggleSwitch 模板 + 薄荷 token**（2026-10-26 回退）：
+  曾用 44×24 自绘胶囊模板（18px 滑块、悬停/按下缩放），但该模板在真机上
+  **只响应键盘和 UIA，鼠标点击不触发 Toggle**（PointerPressed/Released/Tapped
+  都到达控件，IsOn 不变；同页 ComboBox、Button 鼠标正常，换回系统模板后点击
+  立即生效）。为保证可点击性，`AppToggleSwitchStyle` 只保留 MinWidth/FontSize/
+  Foreground 等 setter，模板交回框架默认；颜色仍由 `ToggleSwitchFillOn/Off`、
+  `ToggleSwitchKnobFillOn/Off`、`ToggleSwitchStrokeOn/Off` 六个 token 控制。
+  尺寸随系统（40×20），不再强求 44×24。
+  历史契约（如将来重做自绘模板）：VSM **必须挂在模板根元素**（GoToState 只查根）；
+  CommonStates=Normal/PointerOver/Pressed/Disabled，ToggleStates=Dragging/Off/On；
+  属性切换用 ObjectAnimationUsingKeyFrames。重做前必须先做鼠标点击回归。
 - 控件圆角 4px；唯一保留描边：下拉展开浮层。
 
 ## 3. 视觉方向
 
-**Mint Studio / 薄荷工作室**：雾白画布、薄荷绿强调、大量留白、无卡片边框。
-浅色为默认主题（设置里仍可切深色/跟随系统，深色是同色系绿调炭色）。
+**Mint Paper / 薄荷纸感**（2026-10-26 重构）：雾绿画布 + 白色纸面卡片 +
+薄荷强调。浅色为默认主题（仍可切深色/跟随系统，深色是同色系绿调炭色）。
 
-- **零外框**（v7 定稿，用户明确否定一切边框盒）：全应用不画任何
-  1px 外框——容器透明、输入控件极浅填充无边框（聚焦时薄荷色）、
-  开关为纯填充胶囊无描边、次级按钮软填充无描边、状态胶囊柔色底
-  无描边。区块靠标题、留白与细 hairline（`AppBorderSubtleBrush`）组织。
-  唯一保留描边令牌：下拉**展开浮层**（浮层需要边界读作"浮在上面"）。
-- **壁纸染色**（v9，类 Mica 的静态实现）：启动/主题切换/开关切换时读
-  壁纸主色（`TranscodedWallpaper` → 注册表兜底，24×24 量化取主桶），
-  给画布基准色线性混入——浅色 7% / 深色 10%。零合成、零常驻开销
-  （真 Mica 在本机会黑屏，见 crash-history）。实现：
-  `WallpaperTintService` + 改 Root.Background 共享 Brush 实例的 Color。
-  设置页「外观 → 壁纸染色」可关。
-- 主按钮是**软填充**：薄荷色底 `#D8F1E6` + 深绿文字 `#0A6B4F`，
-  不是高饱和实心块。
-- 不做大面积玻璃、发光、重阴影或渐变。
-- 设备色用于身份/状态/进度，不铺满整页。
-- 一个页面只保留一个主操作。
+- **纸面层次**：内容重新回到卡片上——`AppCardStyle` = 白→微暖白渐变 +
+  1px `#E2ECE6` 细边 + 18 圆角；`AppHeroCardStyle` = 薄荷淡渐变 +
+  22 圆角，用于每页页头/仪表区。区块之间靠 18–24 间距与纸面层次区分，
+  不再裸放在画布上。
+- **页头 hero**：每页顶部一张渐变纸卡，含 11px overline（字距 80）、
+  34px 标题、副标题和右侧状态/主操作。设备中心另有 hero 欢迎区。
+- **设备实物图当主角**：设备中心图片 124px、电量环 104px；耳机页三枚
+  56px 分量环；鼠标页 108px 实物图 + 26px 读数。
+- **主按钮**改为实心薄荷 `#0C8F6E` + 白字（10 圆角、40 高）；次级按钮
+  白纸面 + 细边。开关回到系统模板并隐藏 On/Off 文案，只留胶囊。
+- **导航** 240px：品牌区（渐变图标 + 名称 + 副标题）、白色选中胶囊、
+  底部引擎状态纸卡。
+- 顶部内容区有一层 280px 高的薄荷淡出光晕（`#160E9A76 → 透明`），
+  不参与命中测试；不做真实 Mica/重阴影。
+- **壁纸染色**（v9）：仍是静态混色——启动/主题切换/开关切换时读壁纸
+  主色给画布混色（浅 7% / 深 10%），零合成、零常驻开销（真 Mica 在本机
+  会黑屏，见 crash-history）。设置页可关。
+- 设备色只用于身份/状态/进度，不铺满整页；一个页面只保留一个主操作。
 
 ## 4. 颜色令牌（Light 为默认）
 
@@ -52,14 +60,14 @@
 
 | Token | 值 | 用途 |
 |---|---|---|
-| `AppCanvasBrush` | `#F5F8F6` | 页面画布（雾白） |
-| `AppChromeBrush` | `#EEF3F0` | 导航/侧栏 |
+| `AppCanvasBrush` | `#F2F7F3` | 页面画布（雾白） |
+| `AppChromeBrush` | `#EAF1EC` | 导航/侧栏 |
 | `AppTitleBarBrush` | `#FAFCFB` | 自定义标题栏 |
 | `AppCardBrush` | `#FFFFFF` | 轻容器底（内容大区块） |
 | `AppRaisedBrush` | `#FFFFFF` | 内层面板（输入组/表格） |
 | `AppInputBrush` | `#FFFFFF` | 输入框/下拉 |
 | `AppHoverBrush` | `#EAF3EE` | 悬停 |
-| `AppBorderBrush` | `#DDE7E1` | 常规边框（仅控件用） |
+| `AppBorderBrush` | `#E2ECE6` | 常规边框（仅控件用） |
 | `AppBorderSubtleBrush` | `#E7EEEA` | 细分隔线 |
 | `AppTextPrimaryBrush` | `#182620` | 主文字 |
 | `AppTextSecondaryBrush` | `#4B6159` | 次文字 |
@@ -70,8 +78,8 @@
 | Token | 值 | 用途 |
 |---|---|---|
 | `AppIonBrush` | `#0E9A76` | 焦点、链接、选中（薄荷绿） |
-| `AppPrimaryFillBrush` | `#D8F1E6` | 主按钮软填充 |
-| `AppPrimaryTextBrush` | `#0A6B4F` | 主按钮文字 |
+| `AppPrimaryFillBrush` | `#0C8F6E` | 主按钮软填充 |
+| `AppPrimaryTextBrush` | `#FFFFFF` | 主按钮文字 |
 | `AppHeadsetBrush` | `#7A6CC9` | 耳机（柔紫） |
 | `AppMouseBrush` | `#C28A33` | 鼠标（蜜糖） |
 | `AppRemoteBrush` | `#2E8FBF` | 遥控器（天蓝） |
@@ -154,7 +162,7 @@ Light 的成功/警告/离线和设备色比 Dark 更深，保证 12px 状态文
 | `AppChannelButtonStyle` | 设备中心通道按钮：透明底、悬停薄荷浮起、整列可点 |
 | `AppPrimaryButtonStyle` | 薄荷软填充底 + 深绿字；每页最多一个 |
 | `AppSecondaryButtonStyle` / `AppTertiaryButtonStyle` | 白底细边 / 透明底 |
-| `AppToggleSwitchStyle` | 开/关文案，薄荷填充 |
+| `AppToggleSwitchStyle` | 系统模板 + 薄荷填充 token（2026-10-26 起；自绘模板会吞鼠标点击） |
 | `AppComboBoxStyle` / `AppTextBoxStyle` / `AppSliderStyle` | 统一输入控件外观；ComboBox 横向拉伸 |
 | `AppNavigationViewItemStyle` | 38px 高、8px 圆角、13px 字号；选中为薄荷 tint 底 + 深绿字 |
 | `AppTableRowButtonStyle` | 表格行按钮；横向拉伸，保证整行命中 |

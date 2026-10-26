@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="DeviceCenterPreview.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -16,6 +16,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Spacing="4">
+                    <TextBlock Text="偏好与模块" Style="{StaticResource AppOverlineStyle}" />
                     <TextBlock Text="设置" Style="{StaticResource AppPageTitleStyle}" />
                     <TextBlock Text="修改后立即保存并生效；模块关闭后不再扫描对应设备。"
                                Style="{StaticResource AppPageSubtitleStyle}" />

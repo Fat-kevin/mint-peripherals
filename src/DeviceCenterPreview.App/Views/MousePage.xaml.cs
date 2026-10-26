@@ -37,6 +37,8 @@ public sealed partial class MousePage : Page
     private readonly Grid[] _buttonRows;
     private readonly List<ActionOption> _actionOptions;
     private bool _loading;
+    private bool _syncingDpi;
+    private bool _dirty;
     private bool _controlsAvailable;
     private bool _canWrite;
     private List<int> _rates = [];
@@ -89,6 +91,8 @@ public sealed partial class MousePage : Page
     {
         App.PeripheralService.Changed += OnServiceChanged;
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
+        // 每次进入页面都以设备当前值为准，避免缓存的旧编辑状态。
+        _dirty = false;
         Refresh();
         _ = RefreshMouseOnLoadAsync();
         ResetScrollToTop();
@@ -183,11 +187,6 @@ public sealed partial class MousePage : Page
 
         if (_controlsAvailable)
         {
-            DpiSlider.Minimum = controls.DpiMin ?? 400;
-            DpiSlider.Maximum = controls.DpiMax ?? 8000;
-            DpiSlider.StepFrequency = controls.DpiStep ?? 50;
-            DpiSlider.Value = controls.Dpi ?? DpiSlider.Minimum;
-            DpiValueText.Text = controls.Dpi is int dpi ? $"{dpi} DPI" : "未读取";
             HeroDpiText.Text = controls.Dpi is int heroDpi ? $"{heroDpi}" : "—";
             HeroPollingText.Text = controls.PollingRateHz is int heroRate ? $"{heroRate}" : "—";
             HeroModeText.Text = !controls.OnboardProfilesAvailable
@@ -204,33 +203,57 @@ public sealed partial class MousePage : Page
                 PollingCombo.ItemsSource = _rates.Select(rate => $"{rate} Hz").ToList();
             }
 
-            PollingCombo.SelectedIndex = controls.PollingRateHz is int rate
-                ? _rates.IndexOf(rate)
-                : -1;
-
             var stages = controls.DpiStages;
-            var stageSignature = string.Join(",", stages ?? []) +
-                                 $"|{controls.DpiStageIndex}|{controls.OnboardProfilesAvailable}";
-            if (stageSignature != _lastStageSignature)
-            {
-                _lastStageSignature = stageSignature;
-                for (var index = 0; index < _stageBoxes.Length; index++)
-                {
-                    var hasStage = stages is not null && stages.Count > index;
-                    _stageBoxes[index].IsEnabled = _canWrite && hasStage;
-                    _stageBoxes[index].Text = hasStage ? stages![index].ToString() : "";
-                }
-            }
-
             if (StageIndexCombo.Items.Count != 5)
             {
                 StageIndexCombo.ItemsSource = Enumerable.Range(1, 5).Select(index => $"档位 {index}").ToList();
             }
 
-            StageIndexCombo.SelectedIndex = controls.DpiStageIndex is int stageIndex
-                ? Math.Clamp(stageIndex, 0, 4)
-                : -1;
-            OnboardToggle.IsOn = controls.OnboardMode;
+            // 15 秒刷新只回填设备值；用户有未应用的修改时保留表单，
+            // 否则正在拖的滑条、正在输入的档位会被刷新打回原值。
+            if (!_dirty)
+            {
+                _syncingDpi = true;
+                try
+                {
+                    DpiSlider.Minimum = controls.DpiMin ?? 400;
+                    DpiSlider.Maximum = controls.DpiMax ?? 8000;
+                    DpiSlider.StepFrequency = controls.DpiStep ?? 50;
+                    DpiSlider.Value = Math.Clamp(
+                        controls.Dpi ?? (int)DpiSlider.Minimum,
+                        (int)DpiSlider.Minimum,
+                        (int)DpiSlider.Maximum);
+                    PollingCombo.SelectedIndex = controls.PollingRateHz is int rate
+                        ? _rates.IndexOf(rate)
+                        : -1;
+
+                    var stageSignature = string.Join(",", stages ?? []) +
+                                         $"|{controls.DpiStageIndex}|{controls.OnboardProfilesAvailable}";
+                    if (stageSignature != _lastStageSignature)
+                    {
+                        _lastStageSignature = stageSignature;
+                        for (var index = 0; index < _stageBoxes.Length; index++)
+                        {
+                            var hasStage = stages is not null && stages.Count > index;
+                            _stageBoxes[index].IsEnabled = _canWrite && hasStage;
+                            _stageBoxes[index].Text = hasStage ? stages![index].ToString() : "";
+                        }
+                    }
+
+                    StageIndexCombo.SelectedIndex = controls.DpiStageIndex is int stageIndex
+                        ? Math.Clamp(stageIndex, 0, 4)
+                        : -1;
+                    OnboardToggle.IsOn = controls.OnboardMode;
+                }
+                finally
+                {
+                    _syncingDpi = false;
+                }
+            }
+
+            DpiValueText.Text = _dirty
+                ? $"{(int)DpiSlider.Value} DPI"
+                : (controls.Dpi is int currentDpi ? $"{currentDpi} DPI" : "未读取");
 
             ProfileInfoText.Text = controls.OnboardProfilesAvailable
                 ? $"板载配置：{controls.ProfileName ?? "未命名"} · 配置 {controls.ProfileFormat ?? 1} · " +
@@ -278,6 +301,7 @@ public sealed partial class MousePage : Page
             }
 
             _lastButtonSignature = "";
+            _dirty = false;
             ButtonCountText.Text = "控制通道未接入";
             ButtonMappingScroll.Visibility = Visibility.Collapsed;
             ButtonMappingEmpty.Visibility = Visibility.Visible;
@@ -385,12 +409,20 @@ public sealed partial class MousePage : Page
             DpiValueText.Text = $"{(int)DpiSlider.Value} DPI";
         }
 
+        // 程序回填设备值（15s 刷新/档位切换）时不能把表单标记成“用户修改”。
+        if (_loading || _syncingDpi)
+        {
+            return;
+        }
+
+        MarkDirty();
+
         // 板载模式：滑条即当前档位编辑器——把值同步进对应档位输入框，
         // 「应用设置」走板载配置写入路径（WriteProfileControls）。
         // 注意：InitializeComponent 解析 Minimum/Value 时本回调就会触发，
         // 此时 OnboardToggle/StageIndexCombo/_stageBoxes 还没建好，
         // 必须全部判空，否则空引用会被 XAML 解析器包装成页面解析失败。
-        if (_loading || OnboardToggle is not { IsOn: true } ||
+        if (OnboardToggle is not { IsOn: true } ||
             StageIndexCombo is not { SelectedIndex: >= 0 and < 5 } ||
             _stageBoxes is null)
         {
@@ -398,9 +430,128 @@ public sealed partial class MousePage : Page
         }
 
         var stage = _stageBoxes[StageIndexCombo.SelectedIndex];
-        if (stage is { IsEnabled: true })
+        if (stage is { IsEnabled: true } && stage.Text != ((int)DpiSlider.Value).ToString())
         {
-            stage.Text = ((int)DpiSlider.Value).ToString();
+            _syncingDpi = true;
+            try
+            {
+                stage.Text = ((int)DpiSlider.Value).ToString();
+            }
+            finally
+            {
+                _syncingDpi = false;
+            }
+        }
+    }
+
+    /// <summary>「当前档位」下拉：选中哪档，滑条和 DPI 读数就跟到该档位的值。</summary>
+    private void StageIndex_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || _syncingDpi || StageIndexCombo is null || _stageBoxes is null)
+        {
+            return;
+        }
+
+        MarkDirty();
+        var index = StageIndexCombo.SelectedIndex;
+        if (index < 0 || index >= _stageBoxes.Length)
+        {
+            return;
+        }
+
+        if (DpiLabel is not null)
+        {
+            DpiLabel.Text = $"当前档位 DPI（档位 {index + 1}）";
+        }
+
+        if (int.TryParse(_stageBoxes[index].Text.Trim(), out var value) && value > 0)
+        {
+            SetSliderValue(value);
+        }
+    }
+
+    /// <summary>档位输入框：改的是当前档位时，滑条与读数同步。</summary>
+    private void StageBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loading || _syncingDpi || _stageBoxes is null ||
+            StageIndexCombo is null || DpiSlider is null)
+        {
+            return;
+        }
+
+        if (sender is not TextBox box)
+        {
+            return;
+        }
+
+        var index = Array.IndexOf(_stageBoxes, box);
+        if (index < 0)
+        {
+            return;
+        }
+
+        MarkDirty();
+        if (index != StageIndexCombo.SelectedIndex)
+        {
+            return;
+        }
+
+        if (int.TryParse(box.Text.Trim(), out var value) && value > 0)
+        {
+            SetSliderValue(value);
+        }
+    }
+
+    private void Polling_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || _syncingDpi)
+        {
+            return;
+        }
+
+        MarkDirty();
+    }
+
+    private void SetSliderValue(int value)
+    {
+        if (DpiSlider is null)
+        {
+            return;
+        }
+
+        var clamped = Math.Clamp(value, (int)DpiSlider.Minimum, (int)DpiSlider.Maximum);
+        if (Math.Abs(DpiSlider.Value - clamped) < 0.5)
+        {
+            return;
+        }
+
+        _syncingDpi = true;
+        try
+        {
+            DpiSlider.Value = clamped;
+        }
+        finally
+        {
+            _syncingDpi = false;
+        }
+
+        if (DpiValueText is not null)
+        {
+            DpiValueText.Text = $"{clamped} DPI";
+        }
+    }
+
+    private void MarkDirty()
+    {
+        if (_dirty)
+        {
+            return;
+        }
+
+        _dirty = true;
+        if (SaveStatus is not null)
+        {
+            SaveStatus.Text = "有未应用的修改，点「应用设置」写入";
         }
     }
 
@@ -408,6 +559,7 @@ public sealed partial class MousePage : Page
     {
         if (!_loading)
         {
+            MarkDirty();
             SaveStatus.Text = "板载模式将在“应用设置”后切换。";
         }
     }
@@ -425,6 +577,8 @@ public sealed partial class MousePage : Page
         await App.PeripheralService.RefreshMouseAsync();
         _lastButtonSignature = "";
         _lastStageSignature = "";
+        // 手动刷新即放弃未应用的编辑，以设备当前值为准。
+        _dirty = false;
         Refresh();
         RefreshButton.IsEnabled = true;
         SaveStatus.Text = _controlsAvailable ? "已发现鼠标" : "未发现鼠标；请移动鼠标后重试";
@@ -496,6 +650,11 @@ public sealed partial class MousePage : Page
         var result = await App.PeripheralService.UpdateMouseControlsAsync(updated);
         ApplyButton.IsEnabled = _canWrite;
         _lastButtonSignature = "";
+        if (result.Ok)
+        {
+            _dirty = false;
+        }
+
         Refresh();
         SaveStatus.Text = result.Ok
             ? $"已应用：{updated.Dpi} DPI · {updated.PollingRateHz?.ToString() ?? "-"} Hz" +

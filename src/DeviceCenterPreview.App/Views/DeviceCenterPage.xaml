@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="DeviceCenterPreview.App.Views.DeviceCenterPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,59 +8,66 @@
     <ScrollViewer x:Name="PageScroll"
                   HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                   HorizontalContentAlignment="Stretch">
-        <StackPanel x:Name="PageContent" Padding="36,32,36,24" Spacing="28"
+        <StackPanel x:Name="PageContent" Padding="36,26,36,26" Spacing="24"
                     HorizontalAlignment="Stretch">
 
-            <!-- 页头 -->
-            <Grid ColumnSpacing="24">
+            <!-- 页头：纸感渐变 hero -->
+            <Border Style="{StaticResource AppHeroCardStyle}">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="外设总览" Style="{StaticResource AppOverlineStyle}" />
+                        <TextBlock Text="设备中心" Style="{StaticResource AppPageTitleStyle}" />
+                        <TextBlock Text="电量、链路与控制的唯一入口——三台设备，一屏掌握。"
+                                   Style="{StaticResource AppPageSubtitleStyle}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                HorizontalAlignment="Right" Spacing="10">
+                        <controls:StatusChip Kind="Live" Text="自动刷新 15 秒" />
+                        <TextBlock Text="SPP · HID++ · BLE"
+                                   HorizontalAlignment="Right"
+                                   FontSize="11"
+                                   CharacterSpacing="60"
+                                   Foreground="{ThemeResource AppTextTertiaryBrush}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 三张设备纸卡：整卡可点 -->
+            <Grid ColumnSpacing="18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="设备中心" Style="{StaticResource AppPageTitleStyle}" />
-                    <TextBlock Text="电量、链路与控制入口"
-                               Style="{StaticResource AppPageSubtitleStyle}" />
-                </StackPanel>
-                <controls:StatusChip Grid.Column="1"
-                                     Kind="Live"
-                                     Text="自动刷新 15 秒"
-                                     VerticalAlignment="Bottom"
-                                     Margin="0,0,0,6" />
-            </Grid>
-
-            <!-- 三条通道：共享固定行高，逐行严格对齐；实物图直接浮在画布上 -->
-            <Grid Background="Transparent">
-                <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- 通道一：耳机 -->
+                <!-- 耳机 -->
                 <Button x:Name="HeadsetCardButton" Grid.Column="0"
                         Style="{StaticResource AppChannelButtonStyle}"
                         AutomationProperties.Name="打开耳机控制"
                         Click="HeadsetCard_Click">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="120" />
+                            <RowDefinition Height="132" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="104" />
                             <RowDefinition Height="12" />
-                            <RowDefinition Height="96" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="22" />
+                            <RowDefinition Height="24" />
                             <RowDefinition Height="8" />
                             <RowDefinition Height="26" />
-                            <RowDefinition Height="6" />
+                            <RowDefinition Height="10" />
                             <RowDefinition Height="34" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Image Grid.Row="0" Source="ms-appx:///Assets/Devices/yuandao-case.png"
-                               MaxHeight="112" Stretch="Uniform"
+                               MaxHeight="124" Stretch="Uniform"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <controls:BatteryRing x:Name="HeadsetRing" Grid.Row="2"
-                                              Size="96" BatteryValue="0"
+                                              Size="104" BatteryValue="0"
                                               RingBrush="{ThemeResource AppHeadsetBrush}"
                                               HorizontalAlignment="Center" />
                         <TextBlock x:Name="HeadsetName" Grid.Row="4"
@@ -74,39 +81,47 @@
                                    Style="{StaticResource AppCardFootnoteStyle}"
                                    TextWrapping="Wrap" TextTrimming="None"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
+                        <StackPanel Grid.Row="10" Orientation="Horizontal" Spacing="6"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="进入控制"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource AppIonBrush}" />
+                            <FontIcon Glyph="&#xE76C;" FontSize="11"
+                                      Foreground="{ThemeResource AppIonBrush}"
+                                      VerticalAlignment="Center" />
+                        </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Grid.Column="1" Width="1" Margin="0,20"
-                        Background="{ThemeResource AppBorderSubtleBrush}" />
-
-                <!-- 通道二：鼠标 -->
-                <Button x:Name="MouseCardButton" Grid.Column="2"
+                <!-- 鼠标 -->
+                <Button x:Name="MouseCardButton" Grid.Column="1"
                         Style="{StaticResource AppChannelButtonStyle}"
                         AutomationProperties.Name="打开鼠标控制"
                         Click="MouseCard_Click">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="120" />
+                            <RowDefinition Height="132" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="104" />
                             <RowDefinition Height="12" />
-                            <RowDefinition Height="96" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="22" />
+                            <RowDefinition Height="24" />
                             <RowDefinition Height="8" />
                             <RowDefinition Height="26" />
-                            <RowDefinition Height="6" />
+                            <RowDefinition Height="10" />
                             <RowDefinition Height="34" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Grid Grid.Row="0">
-                            <Image x:Name="HubMouseImage" MaxHeight="112" Stretch="Uniform"
+                            <Image x:Name="HubMouseImage" MaxHeight="124" Stretch="Uniform"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <FontIcon x:Name="HubMouseIcon" Glyph="{StaticResource AppIconMouseGlyph}"
-                                      FontSize="44" Visibility="Collapsed"
+                                      FontSize="48" Visibility="Collapsed"
                                       Foreground="{ThemeResource AppMouseBrush}"
                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
                         <controls:BatteryRing x:Name="MouseRing" Grid.Row="2"
-                                              Size="96" BatteryValue="0"
+                                              Size="104" BatteryValue="0"
                                               RingBrush="{ThemeResource AppMouseBrush}"
                                               HorizontalAlignment="Center" />
                         <TextBlock x:Name="MouseName" Grid.Row="4"
@@ -120,34 +135,42 @@
                                    Style="{StaticResource AppCardFootnoteStyle}"
                                    TextWrapping="Wrap" TextTrimming="None"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
+                        <StackPanel Grid.Row="10" Orientation="Horizontal" Spacing="6"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="进入控制"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource AppIonBrush}" />
+                            <FontIcon Glyph="&#xE76C;" FontSize="11"
+                                      Foreground="{ThemeResource AppIonBrush}"
+                                      VerticalAlignment="Center" />
+                        </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Grid.Column="3" Width="1" Margin="0,20"
-                        Background="{ThemeResource AppBorderSubtleBrush}" />
-
-                <!-- 通道三：遥控器 -->
-                <Button x:Name="RemoteCardButton" Grid.Column="4"
+                <!-- 遥控器 -->
+                <Button x:Name="RemoteCardButton" Grid.Column="2"
                         Style="{StaticResource AppChannelButtonStyle}"
                         AutomationProperties.Name="打开遥控器控制"
                         Click="RemoteCard_Click">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="120" />
+                            <RowDefinition Height="132" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="104" />
                             <RowDefinition Height="12" />
-                            <RowDefinition Height="96" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="22" />
+                            <RowDefinition Height="24" />
                             <RowDefinition Height="8" />
                             <RowDefinition Height="26" />
-                            <RowDefinition Height="6" />
+                            <RowDefinition Height="10" />
                             <RowDefinition Height="34" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Image Grid.Row="0" Source="ms-appx:///Assets/Devices/rc003.png"
-                               MaxHeight="112" Stretch="Uniform"
+                               MaxHeight="124" Stretch="Uniform"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <controls:BatteryRing x:Name="RemoteRing" Grid.Row="2"
-                                              Size="96" BatteryValue="0"
+                                              Size="104" BatteryValue="0"
                                               RingBrush="{ThemeResource AppRemoteBrush}"
                                               HorizontalAlignment="Center" />
                         <TextBlock x:Name="RemoteName" Grid.Row="4"
@@ -161,33 +184,42 @@
                                    Style="{StaticResource AppCardFootnoteStyle}"
                                    TextWrapping="Wrap" TextTrimming="None"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
+                        <StackPanel Grid.Row="10" Orientation="Horizontal" Spacing="6"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="进入控制"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource AppIonBrush}" />
+                            <FontIcon Glyph="&#xE76C;" FontSize="11"
+                                      Foreground="{ThemeResource AppIonBrush}"
+                                      VerticalAlignment="Center" />
+                        </StackPanel>
                     </Grid>
                 </Button>
             </Grid>
 
-            <!-- 状态行 -->
-            <Grid ColumnSpacing="16"
-                  BorderBrush="{ThemeResource AppBorderSubtleBrush}"
-                  BorderThickness="0,1,0,0" Padding="4,14,4,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <FontIcon Glyph="{StaticResource AppIconLinkGlyph}" FontSize="13"
-                              Foreground="{ThemeResource AppSuccessBrush}" />
-                    <TextBlock Text="所有数值来自真实设备；未接入的能力会明确标注。"
-                               Style="{StaticResource AppCardFootnoteStyle}"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-                <Button Grid.Column="1" Content="刷新"
-                        Style="{StaticResource AppSecondaryButtonStyle}"
-                        Click="RefreshMouse_Click" />
-                <Button Grid.Column="2" Content="设置"
-                        Style="{StaticResource AppSecondaryButtonStyle}"
-                        Click="OpenSettings_Click" />
-            </Grid>
+            <!-- 底部状态纸卡 -->
+            <Border Style="{StaticResource AppCardStyle}" Padding="18,14">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <FontIcon Glyph="{StaticResource AppIconLinkGlyph}" FontSize="13"
+                                  Foreground="{ThemeResource AppSuccessBrush}" />
+                        <TextBlock Text="所有数值来自真实设备；未接入的能力会明确标注。"
+                                   Style="{StaticResource AppCardFootnoteStyle}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="刷新"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Click="RefreshMouse_Click" />
+                    <Button Grid.Column="2" Content="设置"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Click="OpenSettings_Click" />
+                </Grid>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -568,3 +568,66 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
 - 第十轮鼠标页板载模式修复随包发布。
 - dist\DeviceCenterPreview-Setup-1.0.6.exe（83.1MB）+ .sha256；
   AppId 不变，直接覆盖升级。
+
+## 2026-10-22 开源发布：github.com/Fat-kevin/mint-peripherals
+
+- 仅 device-center-preview 入库（439 文件 17.5MB）；external/rust/target/
+  与 vendor/rc003-helper/x64/（构建产物）已 gitignore。
+- 根 README 改为对外宣传页（徽章+截图+亮点）；技术总览移至
+  docs/00-agent-readme.md，AGENTS.md 阅读顺序同步。
+- MIT + rc003-helper GPL-3.0 随包说明；LICENSE 入库。
+- Release v1.0.6：Setup-1.0.6.exe + .sha256 + 发布说明。
+
+## 2026-10-26 耳机快捷开关「鼠标点不动」排查：自绘 ToggleSwitch 模板吞点击 + 写后回读
+
+- 现象：耳机页五个快捷开关用鼠标点无反应；UIA TogglePattern / 键盘 Space 能拨动，设备有提示音。
+- 排查：PointerPressed / PointerReleased / Tapped 都到达控件，但 IsOn 不变；同页 ComboBox、
+  Button 用真实鼠标点击正常；把其中一个开关临时换成 `DefaultToggleSwitchStyle` 后鼠标立即生效
+  → 结论是自绘 ControlTemplate 导致控件不响应指针（VSM/命中测试细节未完全定位）。
+- 修复：`AppToggleSwitchStyle` 移除自定义 ControlTemplate，交回框架默认模板，仅保留
+  MinWidth / FontSize / Foreground；颜色继续由 ToggleSwitch* token 控制。开关尺寸由 44×24
+  回到系统 40×20（可点击性优先）。
+- 顺带修复：
+  - `ApplyAsync` 加写后回读校验：设备没接受时返回失败并在状态栏说明，不再假报「设置已发送」；
+  - `ControlsAvailable` 额外要求 `ConnectionState == Connected`，避免 attach 成功到
+    Connected 之间页面用 Default 值覆盖设备真实 ANC/EQ/开关；
+  - `HeldKeyGuard`：启动、遥控引擎停止、进程退出时补发 Ctrl/Win/Shift/Alt 的 key-up，
+    防止 key host 被强杀后语音热键卡在按下状态（本次调试中真实触发过 Win+Ctrl 系统快捷键）。
+- 验证：x64 Debug 0 警告 0 错误；11/11 单测；真实鼠标逐个点击五个开关 Off→On→Off 全部生效，
+  日志 write/readback 一致；遥控器模块关闭时不启动 sidecar/helper。
+
+## 2026-10-26 鼠标 DPI 联动修复（代码检查，未做 UI 测试）
+
+- 发现：`Refresh()` 每 15 秒无条件回填滑条/轮询/档位/板载开关，覆盖用户未应用的编辑；
+  `StageIndexCombo`、5 个 `StageBox` 完全没有事件接线，只有滑条单向写当前档位框。
+- 修复：加 `_dirty`（有未应用修改时刷新不回填表单）与 `_syncingDpi`（防回环）；
+  档位下拉/档位输入/滑条/轮询/板载开关双向联动；应用成功、手动刷新、重新进页清除 dirty；
+  状态栏提示未应用修改。
+- 硬件 DPI 键：G304 只有 0x2201/0x02 getSensorDpi，该值只随主机写入变化（4072 次回读恒为 1350）；
+  profile `[1]` 是默认档位而非运行时档位，按 DPI 键不改写扇区。页面无法得知当前档位，
+  需要后续接 HID++ 通知或新查询，未做猜测性写入。
+- 验证：x64 Debug 构建 0 警告 0 错误（构建到临时输出目录，未启动 UI）；11/11 单测。
+
+## 2026-10-26 UI 重构：Mint Paper / 薄荷纸感（v10）
+
+- 用户反馈「太简洁、太 AI」；方向选「层叠浅色」：雾绿画布 + 白色纸面卡片 + 薄荷强调。
+- 令牌：画布 #F2F7F3、纸面白→#FBFDFB 渐变、卡片边 #E2ECE6、18 圆角；
+  新增 AppPaperGradientBrush / AppHeroGradientBrush / AppAccentGradientBrush /
+  AppInsetBrush / AppCardBorderBrush / AppNavActiveBrush 等。
+- 组件：AppCardStyle/AppHeroCardStyle 回到纸面；主按钮改实心薄荷 #0C8F6E + 白字；
+  次级按钮白纸面 + 细边；输入控件 40 高、10 圆角、细边；开关隐藏 On/Off 文案。
+- Shell：导航 240px 品牌区（渐变图标 + 名称 + 副标题）+ 白色选中胶囊 + 底部引擎纸卡；
+  标题栏右侧去掉与窗口按钮重叠的文字；内容区顶部 280px 薄荷光晕（不参与命中）。
+- 页面：设备中心改 hero 欢迎区 + 三张 22 圆角设备纸卡（124px 实物图 / 104px 电量环 /
+  「进入控制」箭头）；耳机/鼠标 hero 包进 AppHeroCardStyle 并压缩高度；四页加 overline。
+- 验证：x64 Debug 0 警告 0 错误；单次启动截图复核（hub / 耳机 / 鼠标 / 设置），
+  15s 刷新与交互未改。截图：docs/screenshots/redesign-*.png。
+- 未打包安装版。
+
+## 2026-10-26 鼠标「应用后不切档」修复
+
+- 现象：板载模式下选 1/2 档点「应用」，鼠标 DPI 不变。
+- 根因：`ApplyAsync` 在板载模式只写 profile 扇区，未发 setSensorDpi；固件只在加载 profile 时读默认档位。
+- 修复：写 profile 后始终下发 `WriteDpi`；板载模式直写被拒时切一次板载模式强制重载 profile，
+  再失败才报错。日志记录 dpi applied / reload。
+- 验证：x64 Debug 构建 0 警告 0 错误。

@@ -39,6 +39,12 @@
 - 查找流程没有模态框：`_findCts` 非空时再次点击按钮即取消；`Unloaded` 时取消。
 - 耳机断开或控制未知时禁用所有控件并清空查找状态；连接中不保留上一次的 ANC/EQ 选择。
 - 去重合并时保留 SPP 侧 `ControlHint`，否则写入关闭的说明会在 `DeviceManager` 条目合并后丢失。
+- **写后回读校验**（2026-10-26）：`ApplyAsync` 每个 ANC/EQ/开关写入后都从 `State` 取回读值比对；
+  不一致就返回 `WriteResult.Fail("设备未接受：…")` 并在状态栏显示“写入未生效”，不再只报“设置已发送”。
+  写入与回读值同时写 `AppLog`（`headset toggle … write=… readback=…`），便于真机取证。
+- **控制可用性要求整条连接就绪**（2026-10-26）：`ControlsAvailable` = SPP attach 成功 **且**
+  `ConnectionState == Connected`。此前 attach 成功、Connected 尚未到达的几秒里，页面拿到的是
+  `HeadsetControls.Default`（全关），点任意开关会把 ANC/EQ/快捷开关的真实状态覆盖成默认值。
 
 ## 真机注意
 
@@ -50,8 +56,9 @@
 
 - 开机启动已由应用级设置实现（`SettingsPage` + `StartupService`）；原版的分量历史、
   托盘 ANC 快捷菜单、手动重连/断开仍不接入（见 `integration-parity.md` 的取舍）。
-- 五个快捷开关的 V2 固件分流尚未完成，当前仍发 V1；本机固件 4.8 的实际效果需真机验证，
-  未抓官方 App 报文前不盲发 V2。
+- 五个快捷开关仍发 V1（未做 V2 分流）。2026-10-26 在固件 4.8 上逐项实测：五个开关
+  写入后的回读都与目标值一致（`write=True/False` → `readback` 相同），说明本机 4.8
+  接受 V1；V2 帧仍未抓包，不盲发。
 - 提示音音量、触控/手势映射：协议载荷未坐实，未接线；不猜测字节。
 - 耳机写入项需要逐项真机回归（尤其是实验性降噪/风噪）。
 - 查找耳机也受写入开关控制；关闭写入后不会再鸣响。

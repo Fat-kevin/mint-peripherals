@@ -110,7 +110,11 @@ public sealed class RealHeadsetController : IDisposable
         }
     }
 
-    public bool ControlsAvailable => Volatile.Read(ref _attached);
+    // SPP 控制会话 attach 成功不等于连接已完成：attach 到 ConnectionState=Connected 之间
+    // 还有几秒，此时页面会拿到 Default 控制值（全关），点任意开关就会把 ANC/EQ/快捷开关
+    // 的真实状态覆盖成默认值。必须等整条连接就绪才允许写。
+    public bool ControlsAvailable =>
+        Volatile.Read(ref _attached) && ConnectionState == HeadsetConnectionState.Connected;
 
     public void Start()
     {
@@ -175,24 +179,50 @@ public sealed class RealHeadsetController : IDisposable
 
         try
         {
-            var state = State;
-            var currentAnc = ToPreview(state.AncMode);
-            if (currentAnc is null || currentAnc != controls.Anc)
+            // 每个写操作都做「写 → 100ms → 回读」校验：设备没接受时不能报成功，
+            // 否则 UI 会在下一次刷新弹回，用户只看到“已发送”却什么都没变。
+            var rejected = new List<string>();
+
+            var currentAnc = ToPreview(State.AncMode);
+            if (currentAnc != controls.Anc)
             {
                 await _control.SetAncAsync(ToNice(controls.Anc), _cts.Token);
+                var readback = ToPreview(State.AncMode);
+                AppLog.Info($"headset anc write={controls.Anc} readback={readback?.ToString() ?? "unknown"}");
+                if (readback != controls.Anc)
+                {
+                    rejected.Add($"降噪模式（回读 {DescribeAnc(readback)}）");
+                }
             }
 
-            var currentEq = ToPreview(state.Equalizer);
-            if (currentEq is null || currentEq != controls.Eq)
+            var currentEq = ToPreview(State.Equalizer);
+            if (currentEq != controls.Eq)
             {
                 await _control.SetEqualizerAsync(ToNice(controls.Eq), _cts.Token);
+                var readback = ToPreview(State.Equalizer);
+                AppLog.Info($"headset eq write={controls.Eq} readback={readback?.ToString() ?? "unknown"}");
+                if (readback != controls.Eq)
+                {
+                    rejected.Add($"EQ 预设（回读 {DescribeEq(readback)}）");
+                }
             }
 
-            await ApplyToggle(HeadsetToggleFeature.GameMode, state.GameModeEnabled, controls.GameMode);
-            await ApplyToggle(HeadsetToggleFeature.LowLatency, state.LowLatencyEnabled, controls.LowLatency);
-            await ApplyToggle(HeadsetToggleFeature.DualConnection, state.DualConnectionEnabled, controls.DualDevice);
-            await ApplyToggle(HeadsetToggleFeature.InEarDetection, state.InEarDetectionEnabled, controls.InEarDetection);
-            await ApplyToggle(HeadsetToggleFeature.WindSuppression, state.WindSuppressionEnabled, controls.WindNoise);
+            await ApplyToggleAsync(HeadsetToggleFeature.GameMode, controls.GameMode, rejected);
+            await ApplyToggleAsync(HeadsetToggleFeature.LowLatency, controls.LowLatency, rejected);
+            await ApplyToggleAsync(HeadsetToggleFeature.DualConnection, controls.DualDevice, rejected);
+            await ApplyToggleAsync(HeadsetToggleFeature.InEarDetection, controls.InEarDetection, rejected);
+            await ApplyToggleAsync(HeadsetToggleFeature.WindSuppression, controls.WindNoise, rejected);
+
+            if (rejected.Count > 0)
+            {
+                var hint = State.Firmware is { } firmware && firmware.Major == 4 && firmware.Minor >= 7
+                    ? "；固件 4.8 的快捷开关使用 V2 帧，当前版本仍发 V1"
+                    : "";
+                var summary = string.Join("、", rejected);
+                SetStatus($"写入未生效：{summary}");
+                return WriteResult.Fail($"设备未接受：{summary}{hint}。");
+            }
+
             SetStatus("设置已发送");
             return WriteResult.Success;
         }
@@ -394,15 +424,72 @@ public sealed class RealHeadsetController : IDisposable
         _dispatcher.TryEnqueue(() => action());
     }
 
-    private async Task ApplyToggle(HeadsetToggleFeature feature, bool? current, bool desired)
+    private async Task ApplyToggleAsync(HeadsetToggleFeature feature, bool desired, List<string> rejected)
     {
+        var current = ReadToggle(State, feature);
         if (current == desired)
         {
             return;
         }
 
         await _control.SetToggleAsync(feature, desired, _cts.Token);
+        var readback = ReadToggle(State, feature);
+        AppLog.Info($"headset toggle {feature} write={desired} readback={readback?.ToString() ?? "unknown"}");
+        if (readback != desired)
+        {
+            rejected.Add($"{DescribeToggle(feature)}（回读 {DescribeBool(readback)}）");
+        }
     }
+
+    private static bool? ReadToggle(HeadsetControlState state, HeadsetToggleFeature feature) => feature switch
+    {
+        HeadsetToggleFeature.GameMode => state.GameModeEnabled,
+        HeadsetToggleFeature.LowLatency => state.LowLatencyEnabled,
+        HeadsetToggleFeature.DualConnection => state.DualConnectionEnabled,
+        HeadsetToggleFeature.InEarDetection => state.InEarDetectionEnabled,
+        HeadsetToggleFeature.WindSuppression => state.WindSuppressionEnabled,
+        _ => null,
+    };
+
+    private static string DescribeToggle(HeadsetToggleFeature feature) => feature switch
+    {
+        HeadsetToggleFeature.GameMode => "游戏模式",
+        HeadsetToggleFeature.LowLatency => "低延迟",
+        HeadsetToggleFeature.DualConnection => "双设备连接",
+        HeadsetToggleFeature.InEarDetection => "入耳检测",
+        HeadsetToggleFeature.WindSuppression => "抗风噪",
+        _ => feature.ToString(),
+    };
+
+    private static string DescribeBool(bool? value) => value switch
+    {
+        true => "开",
+        false => "关",
+        null => "未知",
+    };
+
+    private static string DescribeAnc(PreviewAnc? mode) => mode switch
+    {
+        PreviewAnc.Off => "关闭",
+        PreviewAnc.Transparency => "通透",
+        PreviewAnc.Normal => "普通",
+        PreviewAnc.Deep => "深度",
+        PreviewAnc.Experimental => "实验性降噪",
+        PreviewAnc.WindNoise => "风噪模式",
+        _ => "未知",
+    };
+
+    private static string DescribeEq(PreviewEq? preset) => preset switch
+    {
+        PreviewEq.Tears => "悔恨之泪",
+        PreviewEq.Balanced => "均衡中正",
+        PreviewEq.Western => "欧美澎湃",
+        PreviewEq.TrueTone => "真律还原",
+        PreviewEq.Gaming => "游戏优化",
+        PreviewEq.Delicate => "细腻佳音",
+        PreviewEq.WarmVocal => "温婉人声",
+        _ => "未知",
+    };
 
     private static bool IsTarget(string name) =>
         name.Contains("YUANDAO", StringComparison.OrdinalIgnoreCase) ||

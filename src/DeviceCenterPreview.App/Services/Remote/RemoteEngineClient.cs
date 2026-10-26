@@ -114,6 +114,10 @@ internal sealed class RemoteEngineClient : IDisposable
             }
         }
 
+        // sidecar 的 key host 可能正按着语音热键；进程被杀后没人再发 key-up，
+        // 这里补一次抬起，避免 Ctrl/Win 卡在按下状态。
+        HeldKeyGuard.ReleaseModifiers("remote engine stop");
+
         _writer = null;
         _reader = null;
         _client = null;

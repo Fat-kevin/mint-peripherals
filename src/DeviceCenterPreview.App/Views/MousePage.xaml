@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="DeviceCenterPreview.App.Views.MousePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -12,6 +12,7 @@
                     HorizontalAlignment="Stretch">
 
             <!-- 仪表区：实物图浮空 + 电量环 + 固定行高读数条 -->
+            <Border Style="{StaticResource AppHeroCardStyle}" Padding="24,22,24,22">
             <StackPanel Spacing="0">
                 <Grid ColumnSpacing="24">
                     <Grid.ColumnDefinitions>
@@ -30,6 +31,7 @@
                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="指针与性能" Style="{StaticResource AppOverlineStyle}" />
                         <TextBlock x:Name="TitleText" Text="鼠标"
                                    Style="{StaticResource AppPageTitleStyle}" />
                         <TextBlock x:Name="SubtitleText"
@@ -92,6 +94,7 @@
                     </StackPanel>
                 </Grid>
             </StackPanel>
+            </Border>
 
             <Border x:Name="ControlBanner"
                     Style="{StaticResource AppStatusBannerStyle}"
@@ -142,13 +145,13 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="轮询率" Style="{StaticResource AppCardLabelStyle}" />
-                                <ComboBox x:Name="PollingCombo"
+                                <ComboBox x:Name="PollingCombo" SelectionChanged="Polling_SelectionChanged"
                                           MinWidth="150"
                                           Style="{StaticResource AppComboBoxStyle}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock Text="当前档位" Style="{StaticResource AppCardLabelStyle}" />
-                                <ComboBox x:Name="StageIndexCombo"
+                                <ComboBox x:Name="StageIndexCombo" SelectionChanged="StageIndex_SelectionChanged"
                                           MinWidth="120"
                                           Style="{StaticResource AppComboBoxStyle}" />
                             </StackPanel>
@@ -168,7 +171,7 @@
                             <Border Grid.Column="0" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="1" Style="{StaticResource AppCardLabelStyle}" />
-                                    <TextBox x:Name="StageBox1" PlaceholderText="0"
+                                    <TextBox x:Name="StageBox1" TextChanged="StageBox_TextChanged" PlaceholderText="0"
                                              Style="{StaticResource AppTextBoxStyle}"
                                              TextAlignment="Center" />
                                 </StackPanel>
@@ -176,7 +179,7 @@
                             <Border Grid.Column="1" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="2" Style="{StaticResource AppCardLabelStyle}" />
-                                    <TextBox x:Name="StageBox2" PlaceholderText="0"
+                                    <TextBox x:Name="StageBox2" TextChanged="StageBox_TextChanged" PlaceholderText="0"
                                              Style="{StaticResource AppTextBoxStyle}"
                                              TextAlignment="Center" />
                                 </StackPanel>
@@ -184,7 +187,7 @@
                             <Border Grid.Column="2" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="3" Style="{StaticResource AppCardLabelStyle}" />
-                                    <TextBox x:Name="StageBox3" PlaceholderText="0"
+                                    <TextBox x:Name="StageBox3" TextChanged="StageBox_TextChanged" PlaceholderText="0"
                                              Style="{StaticResource AppTextBoxStyle}"
                                              TextAlignment="Center" />
                                 </StackPanel>
@@ -192,7 +195,7 @@
                             <Border Grid.Column="3" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="4" Style="{StaticResource AppCardLabelStyle}" />
-                                    <TextBox x:Name="StageBox4" PlaceholderText="0"
+                                    <TextBox x:Name="StageBox4" TextChanged="StageBox_TextChanged" PlaceholderText="0"
                                              Style="{StaticResource AppTextBoxStyle}"
                                              TextAlignment="Center" />
                                 </StackPanel>
@@ -200,7 +203,7 @@
                             <Border Grid.Column="4" Style="{StaticResource AppInnerPanelStyle}" Padding="10">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="5" Style="{StaticResource AppCardLabelStyle}" />
-                                    <TextBox x:Name="StageBox5" PlaceholderText="0"
+                                    <TextBox x:Name="StageBox5" TextChanged="StageBox_TextChanged" PlaceholderText="0"
                                              Style="{StaticResource AppTextBoxStyle}"
                                              TextAlignment="Center" />
                                 </StackPanel>

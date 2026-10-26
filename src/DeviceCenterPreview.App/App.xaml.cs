@@ -48,6 +48,7 @@ public partial class App : Application
             _taskbarPill?.Dispose();
             _tray?.Dispose();
             _realService?.Dispose();
+            HeldKeyGuard.ReleaseModifiers("process exit");
             ReleaseSingleInstance();
         };
     }
@@ -60,6 +61,9 @@ public partial class App : Application
             Environment.Exit(0);
             return;
         }
+
+        // 上一次运行如果被强杀，语音热键可能留在按下状态；启动时先清一次。
+        HeldKeyGuard.ReleaseModifiers("startup");
 
         StartActivationListener();
 
