@@ -11,6 +11,29 @@ use windows::Win32::Devices::Properties::{DEVPROPTYPE, DEVPROP_TYPE_BYTE};
 use windows::Win32::Foundation::DEVPROPKEY;
 
 const REFRESH_INTERVAL: Duration = Duration::from_secs(60);
+/// 闲置判定：遥控器超过这段时间没有活动，下一次活动视为“新的一次使用”。
+pub(crate) const IDLE_THRESHOLD: Duration = Duration::from_secs(300);
+/// 冷却：一次电量读取后这段时间内不再主动读，避免连续按键触发多次查询。
+pub(crate) const REFRESH_COOLDOWN: Duration = Duration::from_secs(300);
+
+/// 活动触发策略：只有“闲置后首次使用”且冷却已过时才主动读一次电量；
+/// 日常连续按键、以及刚读过（notify/初始读/上一轮活动读）都不再查。
+pub(crate) fn activity_should_refresh(
+    now: Instant,
+    last_activity: Option<Instant>,
+    last_read: Option<Instant>,
+) -> bool {
+    let Some(last_activity) = last_activity else {
+        return false;
+    };
+    if now.saturating_duration_since(last_activity) < IDLE_THRESHOLD {
+        return false;
+    }
+    match last_read {
+        Some(last_read) => now.saturating_duration_since(last_read) >= REFRESH_COOLDOWN,
+        None => true,
+    }
+}
 const MAX_DEVICE_LIST_CHARS: u32 = 1024 * 1024;
 const DEVICE_BATTERY: DEVPROPKEY = DEVPROPKEY {
     fmtid: GUID::from_u128(0x49cd1f7656264b17a4e818b4aa1a2213),
@@ -231,6 +254,31 @@ impl Drop for BatteryMonitor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn activity_refreshes_only_after_idle_and_cooldown() {
+        let base = Instant::now();
+        let idle = base + IDLE_THRESHOLD;
+
+        // 从未有活动记录（启动/刚连接）：不触发，初始读已经给过值。
+        assert!(!activity_should_refresh(base, None, None));
+        // 刚活动过：不触发。
+        assert!(!activity_should_refresh(base, Some(base), None));
+        // 闲置超过阈值、且从未读过：触发。
+        assert!(activity_should_refresh(idle, Some(base), None));
+        // 闲置足够但刚读过：冷却拦截。
+        assert!(!activity_should_refresh(
+            idle,
+            Some(base),
+            Some(idle - Duration::from_secs(60))
+        ));
+        // 冷却已过：再次触发。
+        assert!(activity_should_refresh(
+            idle,
+            Some(base),
+            Some(idle - REFRESH_COOLDOWN)
+        ));
+    }
 
     #[test]
     fn battery_value_must_be_one_byte_percentage_including_zero() {

@@ -631,3 +631,25 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
 - 修复：写 profile 后始终下发 `WriteDpi`；板载模式直写被拒时切一次板载模式强制重载 profile，
   再失败才报错。日志记录 dpi applied / reload。
 - 验证：x64 Debug 构建 0 警告 0 错误。
+
+## 2026-11-02 遥控器电量长时间不刷新
+
+- 现象：电量慢慢 100→52，充电数小时仍显示 52，拔下后仍 52，过一阵突然变 100。
+- 原因：notify 订阅成功后 `use_cache_monitor` 关闭了 60 秒兜底轮询，只等设备主动推送；
+  真机 notify 不规律（历史日志 10-19：几十分钟一次），充电/静置期间没有推送，
+  电量停在最后一条读数，直到设备唤醒才推 100。
+- 修复：`sayall-windows` worker 增加 `BATTERY_POLL_INTERVAL = 60s` 兜底：连接期间只要
+  持有 `battery_characteristic`，每 60 秒主动 `read_battery_level` 一次（phase=“poll”），
+  仍走同一代次/phase 门控；未订阅时保持缓存轮询。
+- 验证：临时 tick 日志确认 60 秒触发一次（已移除）；Release sidecar 已重新构建并
+  替换到已安装 1.0.7 的 `sidecars\`（旧文件备份为 `sayall-engine.exe.bak-1.0.7`），
+  应用重启后遥控器正常连接。
+
+## 2026-11-02 电量刷新改为“闲置后首次使用”触发
+
+- 60 秒定时轮询对遥控器过于频繁；改为按使用触发：
+  - 语义按键边沿（raw input 回调）通过 `WorkerMessage::RemoteActivity` 通知 BLE worker；
+  - 闲置 ≥ 5 分钟后的首次活动，且距上次读取 ≥ 5 分钟（冷却）时，延迟 1.5 秒读一次 0x2A19；
+  - notify / 初始读 / 本轮活动读都会更新“上次读取”，避免连续按键重复查询。
+- 决策抽成纯函数 `battery::activity_should_refresh`，新增单测；本机 `cargo test -p sayall-windows --lib battery` 8/8 通过。
+- Release sidecar 重新构建并替换到已安装 1.0.7 的 `sidecars\`（原始文件备份 `sayall-engine.exe.bak-1.0.7`），应用重启后遥控器正常连接。

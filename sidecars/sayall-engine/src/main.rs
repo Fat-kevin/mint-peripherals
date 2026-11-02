@@ -108,7 +108,9 @@ fn main() {
 
     // 按键边沿事件：UI 的“接收测试”只观察语义按键是否到达，不依赖 1 Hz 快照。
     let (edge_sender, edge_receiver) = mpsc::channel::<String>();
+    let note_activity = platform.activity_notifier();
     let _ = platform.subscribe_button_edges(Arc::new(move |edge| {
+        note_activity();
         if let Ok(text) = serde_json::to_string(&json!({
             "event": "button",
             "button": edge.button,

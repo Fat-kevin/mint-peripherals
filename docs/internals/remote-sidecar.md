@@ -89,3 +89,19 @@
 - 原版 `sayall-windows-app` 不能同时运行（BLE/钩子/Helper 冲突）。
 - 宿主退出发送 `system.shutdown`；3 秒未退则 `Kill(entireProcessTree: true)`。
 - 接收测试结束/离开页面必须 `mappings.suspend false`。
+
+## 电量刷新链路（2026-11-02 修订）
+
+1. **设备侧**：连接后订阅 GATT Battery Service `0x180F` / Battery Level `0x2A19` 的
+   notify，并立即读一次初始值；notify 到达即解析为 0–100 的单字节百分比。
+2. **活动触发的一次性刷新**：不做定时轮询。连接期间记录最近一次遥控器活动
+   （语义按键/语音边沿，raw input 回调 → `WorkerMessage::RemoteActivity`）：
+   - 活动间隔 ≥ **5 分钟**（闲置后首次使用），且距上次电量读取 ≥ **5 分钟**（冷却）时，
+     延迟 **1.5 秒**（等被按键唤醒的 BLE 链路稳定）主动读一次 `0x2A19`；
+   - 连续按键、刚被 notify/初始读/上一轮活动读更新过，都不会重复查询；
+   - 未订阅（设备无 BAS）时仍走原有的 60 秒 Windows 属性缓存轮询。
+   - 纯决策函数 `battery::activity_should_refresh`，单测覆盖闲置/冷却/首次使用。
+3. **门控**：读数带连接代次，旧连接迟到读数丢弃；只有
+   `AwaitingCapabilities/Ready/Streaming/Draining` 阶段接受；断开/重连时清空。
+4. **上行**：1 Hz snapshot 带 `connection.batteryLevel`；宿主 `RemoteEngineClient`
+   在电量等稳定字段变化时触发 `Changed`，页面随即刷新；另有 15 秒全量兜底刷新。

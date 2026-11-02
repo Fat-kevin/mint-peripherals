@@ -915,6 +915,18 @@ impl WindowsPlatform {
         self.button_mapping.subscribe_button_edges(callback);
     }
 
+    /// 遥控器活动（按键/语音）：交给 BLE worker 做“闲置后首次使用才刷新电量”的节流。
+    pub fn activity_notifier(&self) -> Box<dyn Fn() + Send + Sync> {
+        #[cfg(windows)]
+        {
+            self.runtime.activity_notifier()
+        }
+        #[cfg(not(windows))]
+        {
+            Box::new(|| {})
+        }
+    }
+
     /// 订阅已触发手势（单击/双击/长按反馈）。
     pub fn subscribe_button_gestures(&self, callback: button_mapping::ButtonGestureCallback) {
         self.button_mapping.subscribe_button_gestures(callback);

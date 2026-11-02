@@ -60,6 +60,8 @@ const PROMOTION_QUIET_WINDOW: Duration = RECONNECT_BASE_DELAY;
 /// 恰为免费窗口；RC001 短按从不触窗）。宿主须周期发送 MIC_EXTEND(0x0E)
 /// 续期，2.5s 间隔留足余量。
 const MICROPHONE_EXTEND_INTERVAL: Duration = Duration::from_millis(2500);
+/// 活动触发的电量读取延迟：先让被按键唤醒的遥控器完成 BLE 唤醒/链路稳定，再读 0x2A19。
+const BATTERY_WAKE_DELAY: Duration = Duration::from_millis(1500);
 
 /// 微信输入法专属的会话激活/休眠恢复只能用于它自己的默认语音热键。
 ///
@@ -373,6 +375,15 @@ impl BleRuntime {
         let _ = self.sender.send(WorkerMessage::RemoteDeviceArrived);
     }
 
+    /// 遥控器活动信号（按键/语音）：转发给 worker 做“闲置后首次使用才刷新电量”的节流。
+    /// 非阻塞、尽力而为；调用方是 raw input 回调线程。
+    pub fn activity_notifier(&self) -> Box<dyn Fn() + Send + Sync> {
+        let sender = self.sender.clone();
+        Box::new(move || {
+            let _ = sender.send(WorkerMessage::RemoteActivity);
+        })
+    }
+
     /// 退出前的优雅关闭（2026-09-16）：请求工作线程关闭会话，并在**有界时间**内
     /// 等待其完成（`ble_session_cleanup` 落盘）后才返回。
     ///
@@ -479,6 +490,8 @@ pub(crate) enum WorkerMessage {
     ///
     /// 只提前、不门控：本信号缺失时重连行为与改造前完全一致。
     RemoteDeviceArrived,
+    /// 遥控器活动（按键/语音，来自平台回调）：worker 内按“闲置 + 冷却”策略决定是否读电量。
+    RemoteActivity,
     BatteryRead {
         connection_generation: u64,
         reading: crate::battery::BatteryReading,
@@ -577,6 +590,9 @@ fn worker_loop(
     let mut backoff = ReconnectBackoff::new(RECONNECT_BASE_DELAY, RECONNECT_MAX_DELAY);
     let mut held_hotkey: Option<KeyChord> = None;
     let mut extend_deadline: Option<Instant> = None;
+    let mut battery_deadline: Option<Instant> = None;
+    let mut last_activity: Option<Instant> = None;
+    let mut last_battery_read: Option<Instant> = None;
     // 提前重连的状态（2026-10-13，issue #206）：上次连接尝试结束的时刻，
     // 供安静窗判定；以及被安静窗抑制的触发累计数（折叠日志；成功提前或成功连上即清零，
     // 保证"首条"日志按 episode 计，不被上一轮的大数字吞掉）。
@@ -594,9 +610,27 @@ fn worker_loop(
     let mut resource_probe = crate::resource_probe::ResourceProbe::default();
 
     loop {
+        // 电量按“闲置后首次使用”触发一次读取（见 battery::activity_should_refresh），
+        // 不再定时轮询；设备 notify 仍负责实时更新。
+        if session.is_none() {
+            battery_deadline = None;
+            last_activity = None;
+        } else {
+            if battery_deadline.is_some()
+                && session
+                    .as_ref()
+                    .is_some_and(|connected| connected.battery_characteristic.is_none())
+            {
+                battery_deadline = None;
+            }
+            if last_activity.is_none() {
+                last_activity = Some(Instant::now());
+            }
+        }
+
         let deadline = nearest_deadline(
             nearest_deadline(capabilities_deadline, reconnect_deadline),
-            extend_deadline,
+            nearest_deadline(extend_deadline, battery_deadline),
         );
         let message = match deadline {
             Some(deadline) => {
@@ -724,6 +758,21 @@ fn worker_loop(
                                             }
                                         }
                                     }
+                                }
+                            }
+                        } else if battery_deadline.is_some_and(|deadline| deadline <= now) {
+                            battery_deadline = None;
+                            if let Some(connected) = session.as_ref() {
+                                if let Some(characteristic) =
+                                    connected.battery_characteristic.as_ref()
+                                {
+                                    last_battery_read = Some(now);
+                                    read_battery_level(
+                                        characteristic,
+                                        &sender,
+                                        connected.connection_generation,
+                                        "activity",
+                                    );
                                 }
                             }
                         }
@@ -889,6 +938,25 @@ fn worker_loop(
                 *lock(&state) = snapshot.clone();
                 apply_input_connection_phase(snapshot.phase);
                 let _ = reply.send(Ok(snapshot));
+            }
+            WorkerMessage::RemoteActivity => {
+                let now = Instant::now();
+                let trigger = crate::battery::activity_should_refresh(
+                    now,
+                    last_activity,
+                    last_battery_read,
+                );
+                last_activity = Some(now);
+                if trigger
+                    && battery_deadline.is_none()
+                    && session
+                        .as_ref()
+                        .is_some_and(|connected| connected.battery_characteristic.is_some())
+                {
+                    gatt_note("remote_battery phase=activity result=scheduled".to_owned());
+                    eprintln!("remote_battery phase=activity result=scheduled");
+                    battery_deadline = Some(now + BATTERY_WAKE_DELAY);
+                }
             }
             WorkerMessage::WakeReconnect => {
                 // 遥控器 HID 活动（正在按键）：仅当无活动会话、有首选设备、
@@ -1172,6 +1240,7 @@ fn worker_loop(
                 connection_generation: message_generation,
                 reading,
             } => {
+                last_battery_read = Some(Instant::now());
                 if !crate::battery::apply_reading(
                     &mut lock(&state),
                     connection_generation,
@@ -2938,12 +3007,13 @@ impl BleSession {
         // 订阅成功后立即读一次初始值：多数设备订阅时也会推一次，重复到达
         // 无害（同一电量幂等覆盖）；个别设备只在变化时推送，这一读保证 UI
         // 不必等到第一次变化才显示电量。
-        read_battery_level_initial(
+        read_battery_level(
             self.battery_characteristic
                 .as_ref()
                 .expect("battery characteristic is owned"),
             &sender,
             connection_generation,
+            "initial_read",
         );
         gatt_note(
             "remote_battery phase=gatt_subscribe result=passed source=gatt_notify".to_owned(),
@@ -3714,10 +3784,11 @@ fn find_battery_service(device: &BluetoothLEDevice) -> Option<GattDeviceService>
 }
 
 /// 订阅成功后读一次当前电量作为初始值（best-effort，失败仅记录）。
-fn read_battery_level_initial(
+fn read_battery_level(
     characteristic: &GattCharacteristic,
     sender: &Sender<WorkerMessage>,
     connection_generation: u64,
+    phase: &'static str,
 ) {
     let started = Instant::now();
     let outcome = (|| -> Option<crate::battery::BatteryReading> {
@@ -3731,7 +3802,7 @@ fn read_battery_level_initial(
     match outcome {
         Some(reading) => {
             gatt_note(format!(
-                "remote_battery phase=initial_read source={} reason={} level={} elapsed_ms={} connection_generation={}",
+                "remote_battery phase={phase} source={} reason={} level={} elapsed_ms={} connection_generation={}",
                 reading.source,
                 reading.reason,
                 reading
@@ -3746,7 +3817,7 @@ fn read_battery_level_initial(
             });
         }
         None => gatt_note(format!(
-            "remote_battery phase=initial_read result=failed elapsed_ms={} connection_generation={}",
+            "remote_battery phase={phase} result=failed elapsed_ms={} connection_generation={}",
             started.elapsed().as_millis(),
             connection_generation,
         )),
