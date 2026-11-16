@@ -107,11 +107,14 @@ public sealed partial class RemotePage : Page, IThemeAware
 
     private readonly Dictionary<(string Key, string Gesture), KeyMapping> _mappingMap = new();
     private readonly Dictionary<string, Button> _hotspots = new();
+    private readonly Dictionary<string, Button> _keyChips = new();
+    private readonly Dictionary<string, Microsoft.UI.Xaml.Shapes.Ellipse> _keyChipDots = new();
     private readonly Dictionary<(string Key, string Gesture), Button> _mappingCells = new();
     private readonly Dictionary<string, Border> _mappingRows = new();
     private readonly Dictionary<string, TextBlock> _receiveTexts = new();
     private readonly Dictionary<string, int> _receivedCounts = new(StringComparer.OrdinalIgnoreCase);
     private string _hoveredKeyId = "";
+    private string _workspace = "layout";
     private readonly Dictionary<string, TextBlock> _gestureActionTexts = new();
     private readonly HashSet<string> _activeButtons = new(StringComparer.OrdinalIgnoreCase);
     private string _selectedKeyId = "ok";
@@ -127,6 +130,8 @@ public sealed partial class RemotePage : Page, IThemeAware
     private CancellationTokenSource? _fullKeyRetryCts;
     private bool _loadedRemote;
     private bool _receiving;
+    private int _voiceReceiveCount;
+    private bool _lastVoiceStreaming;
     private List<RemoteDeviceInfo> _scanDevices = [];
     private DateTimeOffset _testEndsAt;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _statusTimer;
@@ -137,6 +142,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         BuildHotspots();
         BuildGesturePanel();
         BuildMappingTable();
+        BuildKeyChips();
         BuildActionEditor();
         SelectKey(_selectedKeyId);
         _statusTimer = DispatcherQueue.CreateTimer();
@@ -152,6 +158,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         App.PeripheralService.Changed += OnServiceChanged;
         App.PeripheralService.RemoteButtonReceived += OnRemoteButtonReceived;
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
+        ApplyWorkspace(_workspace);
         Refresh();
         _ = LoadRemoteAsync();
         _statusTimer.Start();
@@ -211,7 +218,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         {
             <= 15 => ResourceBrush("AppDangerBrush"),
             <= 35 => ResourceBrush("AppWarningBrush"),
-            _ => ResourceBrush("AppRemoteBrush"),
+            _ => ResourceBrush("AppInkBrush"),
         };
         ControlBannerText.Text = snapshot.ControlHint ?? "";
         ControlBanner.Visibility = string.IsNullOrWhiteSpace(snapshot.ControlHint) ||
@@ -234,6 +241,17 @@ public sealed partial class RemotePage : Page, IThemeAware
 
         FullKeySwitch.IsOn = _engineConnected && FullKeySwitch.IsOn;
         VoiceStatus.Text = _engineConnected ? "引擎就绪" : "遥控器未连接";
+        var voiceStreaming = controls.VoiceState is "streaming" or "draining";
+        if (voiceStreaming && !_lastVoiceStreaming && _receiving)
+        {
+            _voiceReceiveCount++;
+            UpdateVoiceReceiveText();
+        }
+        _lastVoiceStreaming = voiceStreaming;
+        RemoteErrorText.Text = controls.Error ?? "";
+        RemoteErrorText.Visibility = string.IsNullOrWhiteSpace(controls.Error)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         InputStatus.Text = _engineConnected
             ? $"输入：{controls.RawInputPhase} · 设备 {controls.MatchedDeviceCount} · " +
               $"事件 {controls.RawEventCount} · 语义 {controls.SemanticEdgeCount} · 触发 {controls.FiredGestures}" +
@@ -714,17 +732,41 @@ public sealed partial class RemotePage : Page, IThemeAware
 
     private void Workspace_Changed(object sender, RoutedEventArgs e)
     {
-        if (BindingWorkspace is null || PhysicalStage is null || MappingTableStage is null || VoiceWorkspace is null ||
-            sender is not RadioButton { Tag: string workspace })
+        if (sender is Button { Tag: string workspace })
+        {
+            ApplyWorkspace(workspace);
+        }
+    }
+
+    private void ApplyWorkspace(string workspace)
+    {
+        if (BindingWorkspace is null || PhysicalStage is null || MappingTableStage is null ||
+            VoiceWorkspace is null)
         {
             return;
         }
 
-        BindingWorkspace.Visibility = workspace == "voice" ? Visibility.Collapsed : Visibility.Visible;
-        PhysicalStage.Visibility = workspace == "layout" ? Visibility.Visible : Visibility.Collapsed;
-        MappingTableStage.Visibility = workspace == "table" ? Visibility.Visible : Visibility.Collapsed;
-        VoiceWorkspace.Visibility = workspace == "voice" ? Visibility.Visible : Visibility.Collapsed;
+        _workspace = workspace;
+        var bind = workspace != "voice";
+        BindingWorkspace.Visibility = bind ? Visibility.Visible : Visibility.Collapsed;
+        PhysicalStage.Visibility = bind ? Visibility.Visible : Visibility.Collapsed;
+        MappingTableStage.Visibility = Visibility.Collapsed;
+        VoiceWorkspace.Visibility = bind ? Visibility.Collapsed : Visibility.Visible;
+
+        var ink = AppTheme.GetBrush(this, "AppInkBrush");
+        var onInk = AppTheme.GetBrush(this, "AppOnInkBrush");
+        var idle = AppTheme.GetBrush(this, "AppTextSecondaryBrush");
+        Style(TabLayout, "layout");
+        Style(TabVoice, "voice");
+
+        void Style(Button button, string tag)
+        {
+            var active = tag == workspace;
+            button.Background = active ? ink : null;
+            button.Foreground = active ? onInk : idle;
+        }
     }
+
 
     private void BuildMappingTable()
     {
@@ -761,6 +803,7 @@ public sealed partial class RemotePage : Page, IThemeAware
                 };
                 ToolTipService.SetToolTip(cell, $"{keyLabel} · {GestureLabels[index].Label}");
                 cell.Click += MappingCell_Click;
+                cell.Style = (Style)Application.Current.Resources["BenchMappingCellStyle"];
                 Grid.SetColumn(cell, index + 1);
                 grid.Children.Add(cell);
                 _mappingCells[(keyId, gestureId)] = cell;
@@ -820,6 +863,8 @@ public sealed partial class RemotePage : Page, IThemeAware
                 ToolTipService.SetToolTip(cell, action);
             }
         }
+
+        UpdateKeyChips();
     }
 
     private void MappingCell_Click(object sender, RoutedEventArgs e)
@@ -831,6 +876,88 @@ public sealed partial class RemotePage : Page, IThemeAware
             {
                 SelectKey(parts[0]);
                 OpenActionEditor(parts[0], parts[1]);
+            }
+        }
+    }
+
+    private void BuildKeyChips()
+    {
+        var style = (Style)Application.Current.Resources["BenchMappingCellStyle"];
+        for (var index = 0; index < TableKeys.Length; index++)
+        {
+            var (keyId, keyLabel) = TableKeys[index];
+            var label = new TextBlock
+            {
+                Text = keyLabel,
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
+            {
+                Width = 5,
+                Height = 5,
+                Margin = new Thickness(6, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Visibility = Visibility.Collapsed,
+            };
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(label);
+            content.Children.Add(dot);
+
+            var chip = new Button
+            {
+                Content = content,
+                Tag = keyId,
+                Style = style,
+                Height = 28,
+                Padding = new Thickness(8, 0, 8, 0),
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+            };
+            chip.Click += (_, _) =>
+            {
+                if (chip.Tag is string id)
+                {
+                    SelectKey(id);
+                }
+            };
+            Grid.SetRow(chip, index / 5);
+            Grid.SetColumn(chip, index % 5);
+            KeyChipGrid.Children.Add(chip);
+            _keyChips[keyId] = chip;
+            _keyChipDots[keyId] = dot;
+        }
+    }
+
+    /// <summary>芯片显示：选中=墨色；有配置=浅底+点；无配置=只有文字。</summary>
+    private void UpdateKeyChips()
+    {
+        var ink = ResourceBrush("AppInkBrush");
+        var onInk = ResourceBrush("AppOnInkBrush");
+        var surface = ResourceBrush("AppInsetBrush");
+        var primary = ResourceBrush("AppTextPrimaryBrush");
+        var secondary = ResourceBrush("AppTextSecondaryBrush");
+        var success = ResourceBrush("AppSuccessBrush");
+
+        foreach (var (keyId, chip) in _keyChips)
+        {
+            var selected = string.Equals(keyId, _selectedKeyId, StringComparison.Ordinal);
+            var configured = GestureLabels.Any(gesture =>
+                _mappingMap.TryGetValue((keyId, gesture.Id), out var mapping) &&
+                !string.Equals(mapping.Action, "禁用", StringComparison.Ordinal));
+
+            chip.Background = selected ? ink : configured ? surface : null;
+            if (chip.Content is StackPanel content && content.Children.Count >= 2)
+            {
+                if (content.Children[0] is TextBlock label)
+                {
+                    label.Foreground = selected ? onInk : configured ? primary : secondary;
+                }
+
+                if (content.Children[1] is Microsoft.UI.Xaml.Shapes.Ellipse dot)
+                {
+                    dot.Fill = success;
+                    dot.Visibility = configured && !selected ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
         }
     }
@@ -1014,6 +1141,9 @@ public sealed partial class RemotePage : Page, IThemeAware
         }
 
         _receivedCounts.Clear();
+        _voiceReceiveCount = 0;
+        _lastVoiceStreaming = false;
+        UpdateVoiceReceiveText("语音键：等待触发…");
         _receiving = true;
         _testEndsAt = DateTimeOffset.Now.AddSeconds(10);
         _lastReceiveSignature = "";
@@ -1025,10 +1155,23 @@ public sealed partial class RemotePage : Page, IThemeAware
     private async Task StopReceiveTestAsync(string message)
     {
         _receiving = false;
+        UpdateVoiceReceiveText();
         ReceiveStatus.Text = message;
         ReceiveTestButton.Content = "开始接收测试（10 秒）";
         await App.PeripheralService.SetRemoteMappingSuspensionAsync(false);
         UpdateReceiveUi();
+    }
+
+    private void UpdateVoiceReceiveText(string? overrideText = null)
+    {
+        if (VoiceReceiveText is null)
+        {
+            return;
+        }
+
+        VoiceReceiveText.Text = overrideText ?? (_receiving
+            ? $"语音键：已触发 {_voiceReceiveCount} 次（ATVV 语音会话）"
+            : $"语音键：{(_voiceReceiveCount > 0 ? $"✓ {_voiceReceiveCount} 次" : "未触发")}（ATVV 语音会话，不进映射表）");
     }
 
     private void UpdateReceiveUi()
@@ -1114,6 +1257,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         var label = TableKeys.FirstOrDefault(key => key.Id == _selectedKeyId).Label ?? _selectedKeyId;
         UpdateHotspots();
         SelectedKeyTitle.Text = $"{label} · 选择手势";
+        UpdateKeyChips();
 
         foreach (var (gestureId, _) in GestureLabels)
         {
@@ -1156,7 +1300,11 @@ public sealed partial class RemotePage : Page, IThemeAware
         });
     }
 
-    public void OnAppThemeChanged() => UpdateMappingTable();
+    public void OnAppThemeChanged()
+    {
+        ApplyWorkspace(_workspace);
+        UpdateMappingTable();
+    }
 
     private Brush ResourceBrush(string key) => AppTheme.GetBrush(this, key);
 

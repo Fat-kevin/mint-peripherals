@@ -1,11 +1,12 @@
-using DeviceCenterPreview.App.Services;
+﻿using DeviceCenterPreview.App.Services;
+using Microsoft.UI;
 using DeviceCenterPreview.App.Views;
+using DeviceCenterPreview.Core.Models;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using System.Linq;
 using Windows.Graphics;
 using Windows.UI;
 
@@ -14,8 +15,8 @@ namespace DeviceCenterPreview.App;
 public sealed partial class MainWindow : Window
 {
     private readonly DispatcherTimer _notificationTimer = new();
-    private bool _syncingNav;
     private bool _applyingTheme;
+    private string _activeTag = "hub";
 
     public MainWindow()
     {
@@ -34,10 +35,13 @@ public sealed partial class MainWindow : Window
         AppTheme.SyncFrom(Root);
         Root.ActualThemeChanged += OnActualThemeChanged;
         ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
+        SetTitleBar(DragRegion);
         AppTheme.ApplyTitleBar(this, Root);
         ApplyWallpaperTint();
         ContentFrame.Navigated += OnContentFrameNavigated;
+
+        EngineVersionText.Text =
+            $"v{typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"} · SPP / HID++ / BLE";
 
         _notificationTimer.Interval = TimeSpan.FromSeconds(7);
         _notificationTimer.Tick += (_, _) =>
@@ -46,10 +50,12 @@ public sealed partial class MainWindow : Window
             AppInfoBar.IsOpen = false;
         };
         App.NotificationRaised += OnNotificationRaised;
+        App.PeripheralService.Changed += OnServiceChanged;
         AppWindow.Closing += OnAppWindowClosing;
         Closed += (_, _) =>
         {
             App.NotificationRaised -= OnNotificationRaised;
+            App.PeripheralService.Changed -= OnServiceChanged;
             _notificationTimer.Stop();
         };
 
@@ -67,8 +73,6 @@ public sealed partial class MainWindow : Window
         }
 
         // 尺寸只在 InitializeComponent 之前设置一次，之后不再 resize。
-        // 之前把 Resize 放在 InitializeComponent 之后，运行约 8 分钟后
-        // combase 0x80070578 原生崩溃并黑屏；前置后 10+ 分钟稳定。
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.IsResizable = false;
@@ -76,15 +80,19 @@ public sealed partial class MainWindow : Window
         }
         try
         {
-            // 预览版固定纯色：Mica 在本机（NVIDIA + 虚拟显示/WARP 回退）空闲时仍持续合成，
-            // 实测每 2 秒约 700-800ms CPU；纯色为 0-16ms。正式版再按设备能力做可选材质。
+            // 预览版固定纯色：Mica 在本机会持续合成，纯色更省。
             SystemBackdrop = null;
-            // 背景由 XAML 的 AppCanvasBrush 决定，避免被系统默认底色覆盖。
         }
         catch
         {
             // 资源缺失时保持默认背景，保证窗口仍能打开。
         }
+
+        Root.Loaded += (_, _) =>
+        {
+            RefreshSidebar();
+            SetActive("hub");
+        };
 
         if (ContentFrame.Navigate(typeof(DeviceCenterPage)))
         {
@@ -92,7 +100,6 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            // 构造阶段偶发导航失败会让窗口只剩标题栏/黑底；等内容树加载完成后再补一次。
             AppLog.Warn("initial navigation failed; retry after Root.Loaded");
             Root.Loaded += (_, _) =>
             {
@@ -104,6 +111,125 @@ public sealed partial class MainWindow : Window
             };
         }
     }
+
+    // ---------------------------------------------------------------- 设备栏
+
+    private void OnServiceChanged(object? sender, EventArgs e) =>
+        DispatcherQueue.TryEnqueue(RefreshSidebar);
+
+    private void RefreshSidebar()
+    {
+        UpdateNav(HeadsetNavName, HeadsetNavStatus, HeadsetNavDot, HeadsetNavBattery, DeviceKind.Headset);
+        UpdateNav(MouseNavName, MouseNavStatus, MouseNavDot, MouseNavBattery, DeviceKind.Mouse);
+        UpdateNav(RemoteNavName, RemoteNavStatus, RemoteNavDot, RemoteNavBattery, DeviceKind.Remote);
+    }
+
+    private void UpdateNav(
+        TextBlock name,
+        TextBlock status,
+        Microsoft.UI.Xaml.Shapes.Ellipse dot,
+        TextBlock battery,
+        DeviceKind kind)
+    {
+        var snapshot = App.PeripheralService.GetSnapshot(kind);
+        name.Text = snapshot.DisplayName;
+        status.Text = snapshot.IsConnected ? "已连接" : "未连接";
+        dot.Fill = AppTheme.GetBrush(Root,
+            snapshot.IsConnected ? "AppSuccessBrush" : "AppOfflineBrush");
+        battery.Text = snapshot.BatteryPercent is int value ? $"{value}%" : "—";
+    }
+
+    private void DeviceNav_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag })
+        {
+            NavigateTo(tag);
+        }
+    }
+
+    private void Overview_Click(object sender, RoutedEventArgs e) => NavigateTo("hub");
+
+    private void Settings_Click(object sender, RoutedEventArgs e) => NavigateTo("settings");
+
+    private void NavigateTo(string tag)
+    {
+        var page = tag switch
+        {
+            "hub" => typeof(DeviceCenterPage),
+            "headset" => typeof(HeadsetPage),
+            "mouse" => typeof(MousePage),
+            "remote" => typeof(RemotePage),
+            "settings" => typeof(SettingsPage),
+            _ => null,
+        };
+
+        if (page is null)
+        {
+            return;
+        }
+
+        if (ContentFrame.CurrentSourcePageType != page)
+        {
+            ContentFrame.Navigate(page);
+            ContentFrame.BackStack.Clear();
+        }
+
+        SetActive(tag);
+    }
+
+    private void SetActive(string tag)
+    {
+        _activeTag = tag;
+        var selected = AppTheme.GetBrush(Root, "AppPressedBrush");
+        var transparent = new SolidColorBrush(Colors.Transparent);
+
+        StyleDevice(HeadsetNav, HeadsetNavName, tag == "headset", selected, transparent);
+        StyleDevice(MouseNav, MouseNavName, tag == "mouse", selected, transparent);
+        StyleDevice(RemoteNav, RemoteNavName, tag == "remote", selected, transparent);
+
+        StyleFlat(OverviewNav, OverviewNavText, tag == "hub", selected, transparent);
+        StyleFlat(SettingsNav, SettingsNavText, tag == "settings", selected, transparent);
+
+        void StyleDevice(Button button, TextBlock name, bool isActive, Brush activeBrush, Brush idleBrush)
+        {
+            button.Background = isActive ? activeBrush : idleBrush;
+            name.Foreground = AppTheme.GetBrush(Root,
+                isActive ? "AppTextPrimaryBrush" : "AppTextPrimaryBrush");
+            name.FontWeight = isActive
+                ? Microsoft.UI.Text.FontWeights.SemiBold
+                : Microsoft.UI.Text.FontWeights.SemiBold;
+        }
+
+        void StyleFlat(Button button, TextBlock text, bool isActive, Brush activeBrush, Brush idleBrush)
+        {
+            button.Background = isActive ? activeBrush : idleBrush;
+            text.Foreground = AppTheme.GetBrush(Root,
+                isActive ? "AppTextPrimaryBrush" : "AppTextSecondaryBrush");
+            text.FontWeight = isActive
+                ? Microsoft.UI.Text.FontWeights.SemiBold
+                : Microsoft.UI.Text.FontWeights.Normal;
+        }
+    }
+
+    private void OnContentFrameNavigated(object sender, NavigationEventArgs e)
+    {
+        var tag = e.SourcePageType switch
+        {
+            Type t when t == typeof(DeviceCenterPage) => "hub",
+            Type t when t == typeof(HeadsetPage) => "headset",
+            Type t when t == typeof(MousePage) => "mouse",
+            Type t when t == typeof(RemotePage) => "remote",
+            Type t when t == typeof(SettingsPage) => "settings",
+            _ => null,
+        };
+
+        if (tag is not null)
+        {
+            SetActive(tag);
+        }
+    }
+
+    // ---------------------------------------------------------------- 主题 / 通知
 
     public void ApplyTheme(string preference)
     {
@@ -125,6 +251,8 @@ public sealed partial class MainWindow : Window
         AppTheme.ApplyTitleBar(this, Root);
         ApplyWallpaperTint();
         NotifyThemeChanged();
+        RefreshSidebar();
+        SetActive(_activeTag);
     }
 
     private void OnActualThemeChanged(FrameworkElement sender, object args)
@@ -138,12 +266,11 @@ public sealed partial class MainWindow : Window
         AppTheme.ApplyTitleBar(this, Root);
         ApplyWallpaperTint();
         NotifyThemeChanged();
+        RefreshSidebar();
+        SetActive(_activeTag);
     }
 
-    /// <summary>
-    /// 类 Mica 的静态壁纸染色：设置开关、启动、主题切换时重算一次。
-    /// 只改主题字典里共享 Brush 的 Color，无控件重建、无持续合成。
-    /// </summary>
+    /// <summary>类 Mica 的静态壁纸染色：只在启动/主题切换/开关切换时重算一次。</summary>
     public void ApplyWallpaperTint() => _ = ApplyWallpaperTintAsync();
 
     private async Task ApplyWallpaperTintAsync()
@@ -153,7 +280,6 @@ public sealed partial class MainWindow : Window
             Color? dominant = null;
             if (App.Settings.WallpaperTintEnabled)
             {
-                // 解码/量化放线程池；结果在服务内缓存，主题切换时瞬时返回。
                 dominant = await Task.Run(WallpaperTintService.GetDominantColor);
             }
 
@@ -169,8 +295,6 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            // ThemeResource 解析出的 SolidColorBrush 是主题字典里的同一共享实例，
-            // 直接改实例 Color 即可让所有引用处（Root + 内层画布）一起变。
             var light = Root.ActualTheme == ElementTheme.Light;
             var canvasBase = light ? WallpaperTintService.CanvasLight : WallpaperTintService.CanvasDark;
             var ratio = light ? WallpaperTintService.CanvasRatioLight : WallpaperTintService.CanvasRatioDark;
@@ -205,8 +329,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // 用户点关闭按钮/Alt+F4 时只隐藏主窗口，保留托盘图标和任务栏胶囊；
-        // 真正退出只走托盘菜单的“退出”。
+        // 关闭按钮只隐藏主窗口，保留托盘；真正退出走托盘菜单。
         args.Cancel = true;
         App.HideMainWindow();
     }
@@ -226,69 +349,6 @@ public sealed partial class MainWindow : Window
         _notificationTimer.Stop();
         _notificationTimer.Start();
     }
-
-    private void OnContentFrameNavigated(object sender, NavigationEventArgs e)
-    {
-        var tag = e.SourcePageType switch
-        {
-            Type t when t == typeof(DeviceCenterPage) => "hub",
-            Type t when t == typeof(HeadsetPage) => "headset",
-            Type t when t == typeof(MousePage) => "mouse",
-            Type t when t == typeof(RemotePage) => "remote",
-            Type t when t == typeof(SettingsPage) => "settings",
-            _ => null,
-        };
-        if (tag is null)
-        {
-            return;
-        }
-
-        var item = tag == "settings" ? SettingsNav : Nav.MenuItems
-            .OfType<NavigationViewItem>()
-            .FirstOrDefault(candidate => candidate.Tag is string candidateTag && candidateTag == tag);
-        if (item is null || ReferenceEquals(Nav.SelectedItem, item))
-        {
-            return;
-        }
-
-        // 内容帧可能由设备中心卡片直接导航；这里只同步选中项，避免再次 Navigate。
-        _syncingNav = true;
-        try
-        {
-            Nav.SelectedItem = item;
-        }
-        finally
-        {
-            _syncingNav = false;
-        }
-    }
-
-    private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-    {
-        if (_syncingNav)
-        {
-            return;
-        }
-
-        if (args.SelectedItem is not NavigationViewItem item || item.Tag is not string tag)
-        {
-            return;
-        }
-
-        Type? page = tag switch
-        {
-            "hub" => typeof(DeviceCenterPage),
-            "headset" => typeof(HeadsetPage),
-            "mouse" => typeof(MousePage),
-            "remote" => typeof(RemotePage),
-            "settings" => typeof(SettingsPage),
-            _ => null,
-        };
-
-        if (page is not null && ContentFrame.CurrentSourcePageType != page)
-        {
-            ContentFrame.Navigate(page);
-            ContentFrame.BackStack.Clear();
-        }
-    }
 }
+
+

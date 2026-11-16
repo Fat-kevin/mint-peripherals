@@ -1,103 +1,297 @@
-<Page
+﻿<Page
     x:Class="DeviceCenterPreview.App.Views.DeviceCenterPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:DeviceCenterPreview.App.Controls"
     NavigationCacheMode="Required">
-    <ScrollViewer x:Name="PageScroll" HorizontalScrollMode="Disabled"
-                  HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
-        <StackPanel x:Name="PageContent" Padding="34,32,34,26" Spacing="24" HorizontalAlignment="Stretch">
-            <Grid ColumnSpacing="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="我的设备" Style="{StaticResource AppPageTitleStyle}" />
-                <TextBlock x:Name="ConnectionSummary" Grid.Column="1" VerticalAlignment="Center"
-                           Style="{StaticResource AppPageSubtitleStyle}" />
-                <Button Grid.Column="2" Content="刷新鼠标" Style="{StaticResource AppSecondaryButtonStyle}"
-                        VerticalAlignment="Center" Click="RefreshMouse_Click" />
+
+    <!--
+        设备总览 = 三台设备的「机架」：每列一台，靠 1px 竖向细线分隔，不用卡片。
+        列内只有设备本身、真实状态、电量与一个进入动作；其余信息留给各设备自己的工作区。
+    -->
+    <Grid x:Name="PageContent" Padding="32,28,32,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+            <!-- 页头 -->
+            <Grid>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="总览" Style="{StaticResource BenchLabelStyle}" />
+                    <TextBlock Text="设备" Style="{StaticResource BenchPageTitleStyle}" />
+                    <TextBlock x:Name="HeaderSubtitle" Text="三台设备的状态与电量"
+                               Style="{StaticResource BenchMetaStyle}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right"
+                            VerticalAlignment="Top">
+                    <TextBlock Text="自动同步 15 秒" Style="{StaticResource BenchFootnoteStyle}"
+                               VerticalAlignment="Center" />
+                    <Button x:Name="RefreshButton" Style="{StaticResource BenchOutlineButtonStyle}"
+                            Click="Refresh_Click" ToolTipService.ToolTip="刷新鼠标读数">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="{StaticResource AppIconRefreshGlyph}" FontSize="12" />
+                            <TextBlock Text="刷新" FontSize="12.5" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
 
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Border Grid.ColumnSpan="3" Height="340" VerticalAlignment="Top" CornerRadius="14"
-                        Background="{ThemeResource AppCardBrush}" IsHitTestVisible="False" />
-                <Button Grid.Column="0" AutomationProperties.Name="打开耳机设置"
-                        Style="{StaticResource AppGalleryButtonStyle}" Click="HeadsetCard_Click">
-                    <StackPanel Spacing="12">
-                        <Grid Height="340" Padding="14,12,14,24">
-                            <Image Source="ms-appx:///Assets/Devices/yuandao-case.png" Width="216" Height="250"
-                                   VerticalAlignment="Bottom" Stretch="Uniform" />
-                        </Grid>
-                        <StackPanel Spacing="8" Padding="16,0,16,12">
-                            <TextBlock x:Name="HeadsetName" Text="耳机" Style="{StaticResource AppCardTitleStyle}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <StackPanel Orientation="Horizontal" Spacing="14">
-                                <controls:StatusChip x:Name="HeadsetStatusChip" />
-                                <TextBlock x:Name="HeadsetBattery" VerticalAlignment="Center"
-                                           Style="{StaticResource AppBodyStyle}" FontWeight="SemiBold" />
-                            </StackPanel>
-                            <TextBlock x:Name="HeadsetDetail" Style="{StaticResource AppCardFootnoteStyle}" />
-                            <TextBlock Text="进入耳机设置 →" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{ThemeResource AppIonBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
+            <!-- 机架 -->
+            <Border Grid.Row="1" BorderBrush="{ThemeResource AppBorderSubtleBrush}" BorderThickness="1,1,1,1"
+                    Margin="0,24,0,0" VerticalAlignment="Stretch">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="1" AutomationProperties.Name="打开鼠标设置"
-                        Style="{StaticResource AppGalleryButtonStyle}" Click="MouseCard_Click">
-                    <StackPanel Spacing="12">
-                        <Grid Height="340" Padding="14,12,14,24">
-                            <Grid VerticalAlignment="Bottom" Height="264">
-                                <Image x:Name="HubMouseImage" Width="204" MaxHeight="250" Stretch="Uniform" />
-                                <FontIcon x:Name="HubMouseIcon" FontSize="86" Visibility="Collapsed"
-                                          Glyph="{StaticResource AppIconMouseGlyph}"
-                                          Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    <!-- 耳机 -->
+                    <Button x:Name="HeadsetColumn" Grid.Column="0" Tag="headset" Padding="26,22,26,22"
+                            Style="{StaticResource BenchRackColumnStyle}"
+                            Click="Column_Click" AutomationProperties.Name="打开耳机工作区">
+                        <StackPanel Spacing="0">
+                            <Grid>
+                                <TextBlock Text="01" Style="{StaticResource BenchLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            HorizontalAlignment="Right">
+                                    <Ellipse x:Name="HeadsetDot" Width="6" Height="6"
+                                             VerticalAlignment="Center"
+                                             Fill="{ThemeResource AppOfflineBrush}" />
+                                    <TextBlock x:Name="HeadsetStatus" Text="未连接"
+                                               Style="{StaticResource BenchFootnoteStyle}" />
+                                </StackPanel>
                             </Grid>
-                        </Grid>
-                        <StackPanel Spacing="8" Padding="16,0,16,12">
-                            <TextBlock x:Name="MouseName" Text="鼠标" Style="{StaticResource AppCardTitleStyle}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <StackPanel Orientation="Horizontal" Spacing="14">
-                                <controls:StatusChip x:Name="MouseStatusChip" />
-                                <TextBlock x:Name="MouseBattery" VerticalAlignment="Center"
-                                           Style="{StaticResource AppBodyStyle}" FontWeight="SemiBold" />
-                            </StackPanel>
-                            <TextBlock x:Name="MouseDetail" Style="{StaticResource AppCardFootnoteStyle}" />
-                            <TextBlock Text="进入鼠标设置 →" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{ThemeResource AppIonBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
+                            <Grid Height="184" Margin="0,6,0,2">
+                                <Image Source="ms-appx:///Assets/Devices/yuandao-case.png"
+                                       MaxHeight="172" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock x:Name="HeadsetName" Text="耳机"
+                                       Style="{StaticResource BenchDeviceTitleStyle}" />
+                            <TextBlock x:Name="HeadsetMeta" Text="SPP"
+                                       Style="{StaticResource BenchMetaStyle}"
+                                       Margin="0,3,0,0" />
+                            <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,16,0,14" />
 
-                <Button Grid.Column="2" AutomationProperties.Name="打开遥控器设置"
-                        Style="{StaticResource AppGalleryButtonStyle}" Click="RemoteCard_Click">
-                    <StackPanel Spacing="12">
-                        <Grid Height="340" Padding="14,12,14,24">
-                            <Image Source="ms-appx:///Assets/Devices/rc003.png" Height="296" MaxWidth="164"
-                                   VerticalAlignment="Bottom" Stretch="Uniform" />
-                        </Grid>
-                        <StackPanel Spacing="8" Padding="16,0,16,12">
-                            <TextBlock x:Name="RemoteName" Text="遥控器" Style="{StaticResource AppCardTitleStyle}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <StackPanel Orientation="Horizontal" Spacing="14">
-                                <controls:StatusChip x:Name="RemoteStatusChip" />
-                                <TextBlock x:Name="RemoteBattery" VerticalAlignment="Center"
-                                           Style="{StaticResource AppBodyStyle}" FontWeight="SemiBold" />
+                            <!-- 三分量电量 -->
+                            <StackPanel Spacing="11">
+                                <Grid>
+                                    <TextBlock Text="左耳" Style="{StaticResource BenchLabelStyle}" />
+                                    <TextBlock x:Name="LeftPercent" Text="—"
+                                               Style="{StaticResource BenchValueStyle}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Height="4" Margin="0,-6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="LeftFill" Width="0*" />
+                                        <ColumnDefinition x:Name="LeftRest" Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{ThemeResource AppHeadsetBrush}" />
+                                    <Border Grid.Column="1" Background="{ThemeResource AppRingTrackBrush}" />
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="右耳" Style="{StaticResource BenchLabelStyle}" />
+                                    <TextBlock x:Name="RightPercent" Text="—"
+                                               Style="{StaticResource BenchValueStyle}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Height="4" Margin="0,-6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="RightFill" Width="0*" />
+                                        <ColumnDefinition x:Name="RightRest" Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{ThemeResource AppHeadsetBrush}" />
+                                    <Border Grid.Column="1" Background="{ThemeResource AppRingTrackBrush}" />
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="充电盒" Style="{StaticResource BenchLabelStyle}" />
+                                    <TextBlock x:Name="CasePercent" Text="—"
+                                               Style="{StaticResource BenchValueStyle}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Height="4" Margin="0,-6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="CaseFill" Width="0*" />
+                                        <ColumnDefinition x:Name="CaseRest" Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{ThemeResource AppHeadsetBrush}" />
+                                    <Border Grid.Column="1" Background="{ThemeResource AppRingTrackBrush}" />
+                                </Grid>
                             </StackPanel>
-                            <TextBlock x:Name="RemoteDetail" Style="{StaticResource AppCardFootnoteStyle}" />
-                            <TextBlock Text="进入遥控器设置 →" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{ThemeResource AppIonBrush}" />
+
+                            <TextBlock x:Name="HeadsetFact" Text="—" TextTrimming="CharacterEllipsis"
+                                       Style="{StaticResource BenchFootnoteStyle}" Margin="0,14,0,0" Height="34" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,16,0,0">
+                                <TextBlock Text="打开耳机" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                                <FontIcon Glyph="{StaticResource AppIconChevronRightGlyph}" FontSize="10"
+                                          Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                          VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
+                    </Button>
+
+                    <Border Grid.Column="1" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                    <!-- 鼠标 -->
+                    <Button x:Name="MouseColumn" Grid.Column="2" Tag="mouse" Padding="26,22,26,22"
+                            Style="{StaticResource BenchRackColumnStyle}"
+                            Click="Column_Click" AutomationProperties.Name="打开鼠标工作区">
+                        <StackPanel Spacing="0">
+                            <Grid>
+                                <TextBlock Text="02" Style="{StaticResource BenchLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            HorizontalAlignment="Right">
+                                    <Ellipse x:Name="MouseDot" Width="6" Height="6"
+                                             VerticalAlignment="Center"
+                                             Fill="{ThemeResource AppOfflineBrush}" />
+                                    <TextBlock x:Name="MouseStatus" Text="未连接"
+                                               Style="{StaticResource BenchFootnoteStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid Height="184" Margin="0,6,0,2">
+                                <Image Source="ms-appx:///Assets/Devices/g304.png"
+                                       MaxHeight="156" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock x:Name="MouseName" Text="鼠标"
+                                       Style="{StaticResource BenchDeviceTitleStyle}" />
+                            <TextBlock x:Name="MouseMeta" Text="HID++"
+                                       Style="{StaticResource BenchMetaStyle}"
+                                       Margin="0,3,0,0" />
+                            <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,16,0,14" />
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="电量" Style="{StaticResource BenchLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <TextBlock x:Name="MouseBattery" Text="—"
+                                               Style="{StaticResource BenchNumberStyle}" />
+                                    <TextBlock x:Name="MouseBatterySuffix" Text="%"
+                                               Style="{StaticResource BenchFootnoteStyle}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                                </StackPanel>
+                                <Grid Height="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="MouseFill" Width="0*" />
+                                        <ColumnDefinition x:Name="MouseRest" Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{ThemeResource AppMouseBrush}" />
+                                    <Border Grid.Column="1" Background="{ThemeResource AppRingTrackBrush}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock x:Name="MouseFact" Text="—" TextTrimming="CharacterEllipsis"
+                                       Style="{StaticResource BenchFootnoteStyle}" Margin="0,14,0,0" Height="34" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,16,0,0">
+                                <TextBlock Text="打开鼠标" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                                <FontIcon Glyph="{StaticResource AppIconChevronRightGlyph}" FontSize="10"
+                                          Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                          VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Button>
+
+                    <Border Grid.Column="3" Background="{ThemeResource AppBorderSubtleBrush}" />
+
+                    <!-- 遥控器 -->
+                    <Button x:Name="RemoteColumn" Grid.Column="4" Tag="remote" Padding="26,22,26,22"
+                            Style="{StaticResource BenchRackColumnStyle}"
+                            Click="Column_Click" AutomationProperties.Name="打开遥控器工作区">
+                        <StackPanel Spacing="0">
+                            <Grid>
+                                <TextBlock Text="03" Style="{StaticResource BenchLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            HorizontalAlignment="Right">
+                                    <Ellipse x:Name="RemoteDot" Width="6" Height="6"
+                                             VerticalAlignment="Center"
+                                             Fill="{ThemeResource AppOfflineBrush}" />
+                                    <TextBlock x:Name="RemoteStatus" Text="未连接"
+                                               Style="{StaticResource BenchFootnoteStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid Height="184" Margin="0,6,0,2">
+                                <Image Source="ms-appx:///Assets/Devices/rc003.png"
+                                       MaxHeight="172" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock x:Name="RemoteName" Text="遥控器"
+                                       Style="{StaticResource BenchDeviceTitleStyle}" />
+                            <TextBlock x:Name="RemoteMeta" Text="BLE"
+                                       Style="{StaticResource BenchMetaStyle}"
+                                       Margin="0,3,0,0" />
+                            <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,16,0,14" />
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="电量" Style="{StaticResource BenchLabelStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <TextBlock x:Name="RemoteBattery" Text="—"
+                                               Style="{StaticResource BenchNumberStyle}" />
+                                    <TextBlock x:Name="RemoteBatterySuffix" Text="%"
+                                               Style="{StaticResource BenchFootnoteStyle}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                                </StackPanel>
+                                <Grid Height="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="RemoteFill" Width="0*" />
+                                        <ColumnDefinition x:Name="RemoteRest" Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{ThemeResource AppRemoteBrush}" />
+                                    <Border Grid.Column="1" Background="{ThemeResource AppRingTrackBrush}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock x:Name="RemoteFact" Text="—" TextTrimming="CharacterEllipsis"
+                                       Style="{StaticResource BenchFootnoteStyle}" Margin="0,14,0,0" Height="34" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,16,0,0">
+                                <TextBlock Text="打开遥控器" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                                <FontIcon Glyph="{StaticResource AppIconChevronRightGlyph}" FontSize="10"
+                                          Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                          VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- 系统条 -->
+            <Grid Grid.Row="2" Margin="0,20,0,0" ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="本地引擎" Style="{StaticResource BenchLabelStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                 Fill="{ThemeResource AppSuccessBrush}" />
+                        <TextBlock Text="运行中" Style="{StaticResource BenchValueStyle}" />
                     </StackPanel>
-                </Button>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock Text="同步" Style="{StaticResource BenchLabelStyle}" />
+                    <TextBlock Text="每 15 秒自动读取" Style="{StaticResource BenchValueStyle}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="2">
+                    <TextBlock Text="数据" Style="{StaticResource BenchLabelStyle}" />
+                    <TextBlock Text="全部来自真实设备" Style="{StaticResource BenchValueStyle}" />
+                </StackPanel>
+                <Button Grid.Column="3" Content="打开设置"
+                        Style="{StaticResource BenchGhostButtonStyle}"
+                        VerticalAlignment="Bottom" Click="OpenSettings_Click" />
             </Grid>
-        </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </Page>
+
+
+

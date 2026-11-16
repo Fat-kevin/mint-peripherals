@@ -12,6 +12,7 @@
                 <ResourceDictionary Source="ms-appx:///Styles/Controls.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/Cards.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/Navigation.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Bench.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/IconGlyphs.xaml" />
             </ResourceDictionary.MergedDictionaries>
 

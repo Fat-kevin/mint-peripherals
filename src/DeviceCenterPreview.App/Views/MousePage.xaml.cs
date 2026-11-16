@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace DeviceCenterPreview.App.Views;
 
-public sealed partial class MousePage : Page
+public sealed partial class MousePage : Page, IThemeAware
 {
     private static readonly (string Id, string Label)[] ActionOptions =
     [
@@ -40,6 +40,7 @@ public sealed partial class MousePage : Page
     private bool _syncingDpi;
     private bool _dirty;
     private bool _controlsAvailable;
+    private string _workspace = "dpi";
     private bool _canWrite;
     private List<int> _rates = [];
     private string _lastDeviceSignature = "";
@@ -94,6 +95,7 @@ public sealed partial class MousePage : Page
         // 每次进入页面都以设备当前值为准，避免缓存的旧编辑状态。
         _dirty = false;
         Refresh();
+        ApplyWorkspace(_workspace);
         _ = RefreshMouseOnLoadAsync();
         ResetScrollToTop();
     }
@@ -154,7 +156,7 @@ public sealed partial class MousePage : Page
         {
             <= 15 => ResourceBrush("AppDangerBrush"),
             <= 35 => ResourceBrush("AppWarningBrush"),
-            _ => ResourceBrush("AppMouseBrush"),
+            _ => ResourceBrush("AppInkBrush"),
         };
         ControlBannerText.Text = snapshot.ControlHint ?? "";
         ControlBanner.Visibility = string.IsNullOrWhiteSpace(snapshot.ControlHint) ||
@@ -194,6 +196,8 @@ public sealed partial class MousePage : Page
             HeroModeText.Text = !controls.OnboardProfilesAvailable
                 ? "不支持"
                 : (controls.OnboardMode ? "已开启" : "已关闭");
+            HeroBatteryText.Text = snapshot.BatteryPercent is int heroBattery ? $"{heroBattery}%" : "—";
+            HeroWriteText.Text = controls.WriteSupported ? "可写" : "只读";
 
             _rates = controls.SupportedPollingRates is { Count: > 0 }
                 ? controls.SupportedPollingRates.ToList()
@@ -221,6 +225,8 @@ public sealed partial class MousePage : Page
                     DpiSlider.Minimum = controls.DpiMin ?? 400;
                     DpiSlider.Maximum = controls.DpiMax ?? 8000;
                     DpiSlider.StepFrequency = controls.DpiStep ?? 50;
+                    DpiMinText.Text = (controls.DpiMin ?? 400).ToString();
+                    DpiMaxText.Text = (controls.DpiMax ?? 8000).ToString();
                     DpiSlider.Value = Math.Clamp(
                         controls.Dpi ?? (int)DpiSlider.Minimum,
                         (int)DpiSlider.Minimum,
@@ -288,6 +294,8 @@ public sealed partial class MousePage : Page
             HeroDpiText.Text = "—";
             HeroPollingText.Text = "—";
             HeroModeText.Text = "未接入";
+            HeroBatteryText.Text = "—";
+            HeroWriteText.Text = "—";
             PollingCombo.SelectedIndex = -1;
             ProfileInfoText.Text = "控制通道尚未接入。";
             DeviceInfoText.Text = snapshot.ControlHint ?? snapshot.StatusText;
@@ -337,7 +345,7 @@ public sealed partial class MousePage : Page
         for (var rowIndex = 0; rowIndex < ButtonMappingPanel.RowDefinitions.Count; rowIndex++)
         {
             ButtonMappingPanel.RowDefinitions[rowIndex].Height =
-                rowIndex < visibleRows ? new GridLength(44) : new GridLength(0);
+                rowIndex < visibleRows ? new GridLength(40) : new GridLength(0);
         }
 
         if (!mappingAvailable)
@@ -395,16 +403,36 @@ public sealed partial class MousePage : Page
 
     private void Workspace_Changed(object sender, RoutedEventArgs e)
     {
-        if (PerformanceCard is null || MappingPanel is null || BoardPanel is null ||
-            sender is not RadioButton { Tag: string workspace })
+        if (sender is Button { Tag: string workspace })
         {
-            return;
+            ApplyWorkspace(workspace);
         }
+    }
 
+    private void ApplyWorkspace(string workspace)
+    {
+        _workspace = workspace;
         PerformanceCard.Visibility = workspace == "dpi" ? Visibility.Visible : Visibility.Collapsed;
         MappingPanel.Visibility = workspace == "buttons" ? Visibility.Visible : Visibility.Collapsed;
         BoardPanel.Visibility = workspace == "board" ? Visibility.Visible : Visibility.Collapsed;
+
+        var ink = AppTheme.GetBrush(this, "AppInkBrush");
+        var onInk = AppTheme.GetBrush(this, "AppOnInkBrush");
+        var idle = AppTheme.GetBrush(this, "AppTextSecondaryBrush");
+
+        Apply(WorkspaceDpi, "dpi");
+        Apply(WorkspaceButtons, "buttons");
+        Apply(WorkspaceBoard, "board");
+
+        void Apply(Button button, string tag)
+        {
+            var selected = tag == workspace;
+            button.Background = selected ? ink : null;
+            button.Foreground = selected ? onInk : idle;
+        }
     }
+
+    public void OnAppThemeChanged() => ApplyWorkspace(_workspace);
 
     private void DeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

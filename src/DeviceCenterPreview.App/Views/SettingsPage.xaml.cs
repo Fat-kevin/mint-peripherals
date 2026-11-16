@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace DeviceCenterPreview.App.Views;
 
-public sealed partial class SettingsPage : Page
+public sealed partial class SettingsPage : Page, IThemeAware
 {
     private static readonly string[] ThemeModeValues =
     [
@@ -23,6 +23,8 @@ public sealed partial class SettingsPage : Page
     ];
 
     private readonly FrameworkElement[] _categories;
+    private readonly Button[] _tabs;
+    private int _category;
     private bool _loading;
     private bool _resetArmed;
     private DispatcherTimer? _resetTimer;
@@ -32,27 +34,50 @@ public sealed partial class SettingsPage : Page
     {
         InitializeComponent();
         _categories = [Category0, Category1, Category2, Category3, Category4, Category5];
+        _tabs = [Tab0, Tab1, Tab2, Tab3, Tab4, Tab5];
         ThemeCombo.ItemsSource = ThemeModeLabels;
         LowBatteryThresholdCombo.ItemsSource = new[] { 0, 10, 15, 20, 25, 30, 40, 50, 60, 80 };
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         PageScroll.SizeChanged += (_, _) => PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
+        ApplyCategory(0);
     }
 
     private void Category_Changed(object sender, RoutedEventArgs e)
     {
-        if (_categories is null || sender is not RadioButton { Tag: string tag } ||
-            !int.TryParse(tag, out var selected))
+        if (sender is Button { Tag: string tag } && int.TryParse(tag, out var selected))
+        {
+            ApplyCategory(selected);
+        }
+    }
+
+    private void ApplyCategory(int selected)
+    {
+        if (_categories is null)
         {
             return;
         }
 
+        _category = Math.Clamp(selected, 0, _categories.Length - 1);
         for (var index = 0; index < _categories.Length; index++)
         {
-            _categories[index].Visibility = index == selected ? Visibility.Visible : Visibility.Collapsed;
+            _categories[index].Visibility = index == _category ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        var ink = AppTheme.GetBrush(this, "AppInkBrush");
+        var onInk = AppTheme.GetBrush(this, "AppOnInkBrush");
+        var idle = AppTheme.GetBrush(this, "AppTextSecondaryBrush");
+        for (var index = 0; index < _tabs.Length; index++)
+        {
+            var active = index == _category;
+            _tabs[index].Background = active ? ink : null;
+            _tabs[index].Foreground = active ? onInk : idle;
+        }
+
         PageScroll.ChangeView(null, 0, null, true);
     }
+
+    public void OnAppThemeChanged() => ApplyCategory(_category);
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {

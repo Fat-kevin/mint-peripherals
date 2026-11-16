@@ -433,7 +433,9 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
             state.LastPressed,
             state.ActiveButtons,
             state.MappingsEnabled,
-            state.ListenerActive);
+            state.ListenerActive,
+            state.VoiceState,
+            state.Error);
     }
 
     public void UpdateRemoteControls(RemoteControls controls)

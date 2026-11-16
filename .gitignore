@@ -30,3 +30,6 @@ external/rust/target/
 
 # rc003 Helper 二进制载荷（本地构建产物：cargo 构建后生成，LICENSE/README 保留入库）
 vendor/rc003-helper/x64/
+
+__pycache__/
+*.pyc

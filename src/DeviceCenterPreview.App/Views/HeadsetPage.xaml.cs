@@ -1,27 +1,111 @@
 using DeviceCenterPreview.App.Services;
 using DeviceCenterPreview.Core.Models;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace DeviceCenterPreview.App.Views;
 
-public sealed partial class HeadsetPage : Page
+public sealed partial class HeadsetPage : Page, IThemeAware
 {
-    private readonly RadioButton[] _ancModes;
-    private readonly RadioButton[] _eqModes;
+    private static readonly string[] AncNames =
+        ["关闭", "通透", "普通", "深度", "实验性降噪", "风噪模式"];
+
+    private static readonly string[] AncDescriptions =
+        ["不处理环境音", "听见周围声音", "日常均衡降噪", "强力隔绝环境", "实验室算法", "抑制户外风噪"];
+
+    private static readonly string[] EqNames =
+        ["悔恨之泪", "均衡中正", "欧美澎湃", "真律还原", "游戏优化", "细腻佳音", "温婉人声"];
+
+    private readonly List<Button> _ancButtons = [];
+    private readonly List<TextBlock> _ancLabels = [];
+    private readonly List<TextBlock> _ancNotes = [];
+    private readonly List<Button> _eqButtons = [];
+    private readonly List<TextBlock> _eqLabels = [];
+
     private bool _loading;
     private bool _controlsAvailable;
+    private int _ancIndex = -1;
+    private int _eqIndex = -1;
     private CancellationTokenSource? _findCts;
     private bool _findRinging;
 
     public HeadsetPage()
     {
         InitializeComponent();
-        _ancModes = BuildModes(AncModes, "NoiseMode", ["关闭", "通透", "普通", "深度", "实验性降噪", "风噪模式"], 3);
-        _eqModes = BuildModes(EqModes, "SoundPreset", ["悔恨之泪", "均衡中正", "欧美澎湃", "真律还原", "游戏优化", "细腻佳音", "温婉人声"], 3);
+        BuildTiles();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         PageScroll.SizeChanged += (_, _) => PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
+    }
+
+    private void BuildTiles()
+    {
+        var modeStyle = (Style)Application.Current.Resources["BenchModeButtonStyle"];
+
+        for (var i = 0; i < AncNames.Length; i++)
+        {
+            var name = new TextBlock
+            {
+                Text = AncNames[i],
+                FontSize = 14,
+                FontWeight = FontWeights.SemiBold,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            };
+            var note = new TextBlock
+            {
+                Text = AncDescriptions[i],
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            };
+            var stack = new StackPanel { Spacing = 2 };
+            stack.Children.Add(name);
+            stack.Children.Add(note);
+
+            var button = new Button
+            {
+                Content = stack,
+                Style = modeStyle,
+                Height = 50,
+                Tag = i,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                VerticalContentAlignment = VerticalAlignment.Center,
+            };
+            button.Click += Anc_Click;
+            Grid.SetRow(button, i / 3);
+            Grid.SetColumn(button, i % 3);
+            AncGrid.Children.Add(button);
+            _ancButtons.Add(button);
+            _ancLabels.Add(name);
+            _ancNotes.Add(note);
+        }
+
+        for (var i = 0; i < EqNames.Length; i++)
+        {
+            var label = new TextBlock
+            {
+                Text = EqNames[i],
+                FontSize = 13,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            var button = new Button
+            {
+                Content = label,
+                Style = modeStyle,
+                Height = 32,
+                Tag = i,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+            button.Click += Eq_Click;
+            Grid.SetRow(button, i / 4);
+            Grid.SetColumn(button, i % 4);
+            EqGrid.Children.Add(button);
+            _eqButtons.Add(button);
+            _eqLabels.Add(label);
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -29,13 +113,7 @@ public sealed partial class HeadsetPage : Page
         App.PeripheralService.Changed += OnServiceChanged;
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
         Refresh();
-        ResetScrollToTop();
-    }
-
-    private void ResetScrollToTop()
-    {
         PageScroll.ChangeView(null, 0, null, true);
-        DispatcherQueue.TryEnqueue(() => PageScroll.ChangeView(null, 0, null, true));
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -44,37 +122,52 @@ public sealed partial class HeadsetPage : Page
         _findCts?.Cancel();
     }
 
-    private void OnServiceChanged(object? sender, EventArgs e)
-    {
+    public void OnAppThemeChanged() => Refresh();
+
+    private void OnServiceChanged(object? sender, EventArgs e) =>
         DispatcherQueue.TryEnqueue(Refresh);
-    }
 
     private void Refresh()
     {
         var snapshot = App.PeripheralService.GetSnapshot(DeviceKind.Headset);
-        TitleText.Text = snapshot.IsConnected ? snapshot.DisplayName : "耳机";
-        SubtitleText.Text = snapshot.StatusText;
-        HeadsetFirmwareText.Text = snapshot.Firmware is null
-            ? "固件 —"
-            : $"固件 {snapshot.Firmware}";
+        PageTitleText.Text = snapshot.DisplayName;
+        PageMetaText.Text = snapshot.Firmware is { Length: > 0 } firmware
+            ? $"SPP 已接入 · 固件 {firmware}"
+            : snapshot.StatusText;
+
+        ChipConn.Text = snapshot.IsConnected ? "已连接" : "未连接";
+        ConnDot.Fill = AppTheme.GetBrush(this,
+            snapshot.IsConnected ? "AppSuccessBrush" : "AppOfflineBrush");
+        ChipFirmware.Text = snapshot.Firmware ?? "—";
+        ChipWrite.Text = snapshot.WriteAllowed ? "允许" : "已关闭";
+
+        SetComponent(snapshot, "left", LeftBarFill, LeftBarRest, LeftPercent, LeftCharging);
+        SetComponent(snapshot, "right", RightBarFill, RightBarRest, RightPercent, RightCharging);
+        SetComponent(snapshot, "case", CaseBarFill, CaseBarRest, CasePercent, CaseCharging);
+
         ControlBannerText.Text = snapshot.ControlHint ?? "";
-        ControlBanner.Visibility = string.IsNullOrWhiteSpace(snapshot.ControlHint) ||
-                                   snapshot.ControlHint == snapshot.StatusText ||
-                                   (snapshot.ControlsAvailable && snapshot.WriteAllowed)
+        ControlBanner.Visibility = snapshot.ControlsAvailable && snapshot.WriteAllowed
             ? Visibility.Collapsed
             : Visibility.Visible;
 
-        SetComponent(snapshot, "left", LeftReadout, LeftCharging);
-        SetComponent(snapshot, "right", RightReadout, RightCharging);
-        SetComponent(snapshot, "case", CaseReadout, CaseCharging);
-
         _controlsAvailable = snapshot.ControlsAvailable && snapshot.WriteAllowed;
-        GameModeSwitch.IsEnabled = _controlsAvailable;
-        LowLatencySwitch.IsEnabled = _controlsAvailable;
-        DualDeviceSwitch.IsEnabled = _controlsAvailable;
-        InEarSwitch.IsEnabled = _controlsAvailable;
-        WindNoiseSwitch.IsEnabled = _controlsAvailable;
-        FindButton.IsEnabled = _controlsAvailable;
+        var enabled = _controlsAvailable;
+        foreach (var button in _ancButtons)
+        {
+            button.IsEnabled = enabled;
+        }
+
+        foreach (var button in _eqButtons)
+        {
+            button.IsEnabled = enabled;
+        }
+
+        GameModeSwitch.IsEnabled = enabled;
+        LowLatencySwitch.IsEnabled = enabled;
+        DualDeviceSwitch.IsEnabled = enabled;
+        InEarSwitch.IsEnabled = enabled;
+        WindNoiseSwitch.IsEnabled = enabled;
+        FindButton.IsEnabled = enabled;
         if (!_controlsAvailable)
         {
             ResetFind(clearStatus: true);
@@ -82,73 +175,109 @@ public sealed partial class HeadsetPage : Page
 
         var controls = App.PeripheralService.GetHeadsetControls();
         _loading = true;
-        UpdateModes(_ancModes, controls.IsKnown ? (int)controls.Anc : -1);
-        UpdateModes(_eqModes, controls.IsKnown ? (int)controls.Eq : -1);
+        _ancIndex = controls.IsKnown ? (int)controls.Anc : -1;
+        _eqIndex = controls.IsKnown ? (int)controls.Eq : -1;
         GameModeSwitch.IsOn = controls.IsKnown && controls.GameMode;
         LowLatencySwitch.IsOn = controls.IsKnown && controls.LowLatency;
         DualDeviceSwitch.IsOn = controls.IsKnown && controls.DualDevice;
         InEarSwitch.IsOn = controls.IsKnown && controls.InEarDetection;
         WindNoiseSwitch.IsOn = controls.IsKnown && controls.WindNoise;
         _loading = false;
+
+        ChipAnc.Text = _ancIndex >= 0 ? AncNames[_ancIndex] : "—";
+        ChipEq.Text = _eqIndex >= 0 ? EqNames[_eqIndex] : "—";
+        ApplySelectionColors();
     }
 
-    private RadioButton[] BuildModes(Grid grid, string groupName, string[] labels, int columns)
+    private void ApplySelectionColors()
     {
-        for (var column = 0; column < columns; column++)
+        var ink = AppTheme.GetBrush(this, "AppInkBrush");
+        var onInk = AppTheme.GetBrush(this, "AppOnInkBrush");
+        var primary = AppTheme.GetBrush(this, "AppTextPrimaryBrush");
+        var tertiary = AppTheme.GetBrush(this, "AppTextTertiaryBrush");
+        var border = AppTheme.GetBrush(this, "AppBorderBrush");
+        var surface = AppTheme.GetBrush(this, "AppCardBrush");
+
+        for (var i = 0; i < _ancButtons.Count; i++)
         {
-            grid.ColumnDefinitions.Add(new ColumnDefinition());
+            var selected = i == _ancIndex;
+            var button = _ancButtons[i];
+            button.Background = selected ? ink : surface;
+            button.BorderBrush = selected ? ink : border;
+            _ancLabels[i].Foreground = selected ? onInk : primary;
+            _ancNotes[i].Foreground = selected ? onInk : tertiary;
+            _ancNotes[i].Opacity = selected ? 0.8 : 1;
         }
 
-        for (var row = 0; row * columns < labels.Length; row++)
+        for (var i = 0; i < _eqButtons.Count; i++)
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        }
-
-        var buttons = new RadioButton[labels.Length];
-        for (var index = 0; index < labels.Length; index++)
-        {
-            var button = new RadioButton
-            {
-                Content = labels[index],
-                GroupName = groupName,
-                Style = (Style)Application.Current.Resources["AppModeButtonStyle"],
-            };
-            button.Checked += Toggle_Changed;
-            Grid.SetRow(button, index / columns);
-            Grid.SetColumn(button, index % columns);
-            grid.Children.Add(button);
-            buttons[index] = button;
-        }
-
-        return buttons;
-    }
-
-    private void UpdateModes(RadioButton[] buttons, int selectedIndex)
-    {
-        for (var index = 0; index < buttons.Length; index++)
-        {
-            buttons[index].IsEnabled = _controlsAvailable;
-            buttons[index].IsChecked = index == selectedIndex;
+            var selected = i == _eqIndex;
+            var button = _eqButtons[i];
+            button.Background = selected ? ink : surface;
+            button.BorderBrush = selected ? ink : border;
+            _eqLabels[i].Foreground = selected ? onInk : primary;
         }
     }
 
-    private static int SelectedMode(RadioButton[] buttons, int fallback)
-    {
-        var selection = Array.FindIndex(buttons, button => button.IsChecked == true);
-        return selection >= 0 ? selection : fallback;
-    }
-
-    private static void SetComponent(PeripheralSnapshot snapshot, string key, TextBlock readout, TextBlock caption)
+    private void SetComponent(
+        PeripheralSnapshot snapshot,
+        string key,
+        ColumnDefinition fill,
+        ColumnDefinition rest,
+        TextBlock percentText,
+        TextBlock chargingText)
     {
         var component = snapshot.Components.FirstOrDefault(item => item.Key == key);
-        readout.Text = component?.Percent is int percent ? $"{percent}%" : "—";
-        caption.Text = component?.Charging switch
+        var value = component?.Percent;
+        if (value is int percent)
+        {
+            fill.Width = new GridLength(Math.Clamp(percent, 0, 100), GridUnitType.Star);
+            rest.Width = new GridLength(Math.Clamp(100 - percent, 0, 100), GridUnitType.Star);
+            percentText.Text = $"{percent}%";
+        }
+        else
+        {
+            fill.Width = new GridLength(0, GridUnitType.Star);
+            rest.Width = new GridLength(1, GridUnitType.Star);
+            percentText.Text = "—";
+        }
+
+        var charging = component?.Charging ?? ChargingState.Unknown;
+        chargingText.Text = charging switch
         {
             ChargingState.Charging => "充电中",
             ChargingState.Full => "已充满",
             ChargingState.Discharging => "使用中",
             _ => "",
         };
+        chargingText.Foreground = AppTheme.GetBrush(this,
+            charging == ChargingState.Charging ? "AppWarningBrush" : "AppTextTertiaryBrush");
+    }
+
+    private void Anc_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loading || !_controlsAvailable || sender is not Button { Tag: int index })
+        {
+            return;
+        }
+
+        _ancIndex = index;
+        ChipAnc.Text = AncNames[index];
+        ApplySelectionColors();
+        Save();
+    }
+
+    private void Eq_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loading || !_controlsAvailable || sender is not Button { Tag: int index })
+        {
+            return;
+        }
+
+        _eqIndex = index;
+        ChipEq.Text = EqNames[index];
+        ApplySelectionColors();
+        Save();
     }
 
     private void Toggle_Changed(object sender, RoutedEventArgs e) => Save();
@@ -161,8 +290,8 @@ public sealed partial class HeadsetPage : Page
         }
 
         var controls = new HeadsetControls(
-            (AncMode)SelectedMode(_ancModes, (int)AncMode.Off),
-            (EqPreset)SelectedMode(_eqModes, (int)EqPreset.Balanced),
+            _ancIndex >= 0 ? (AncMode)_ancIndex : AncMode.Off,
+            _eqIndex >= 0 ? (EqPreset)_eqIndex : EqPreset.Balanced,
             GameModeSwitch.IsOn,
             LowLatencySwitch.IsOn,
             DualDeviceSwitch.IsOn,
@@ -170,7 +299,7 @@ public sealed partial class HeadsetPage : Page
             WindNoiseSwitch.IsOn);
 
         var result = await App.PeripheralService.UpdateHeadsetControlsAsync(controls);
-        SaveStatus.Text = result.Ok ? "已发送" : result.Message ?? "写入失败";
+        SaveStatus.Text = result.Ok ? "已写入耳机并回读校验" : result.Message ?? "写入失败";
     }
 
     private async void Find_Click(object sender, RoutedEventArgs e)
@@ -192,14 +321,13 @@ public sealed partial class HeadsetPage : Page
             return;
         }
 
-        // 防呆：首次点击只开始 5 秒倒计时，不立即鸣响；倒计时内再点一次即可取消。
         var cts = new CancellationTokenSource();
         _findCts = cts;
         try
         {
             for (var n = 5; n >= 1; n--)
             {
-                SaveStatus.Text = $"{n} 秒后开始鸣响，点“取消查找”可立即停止";
+                SaveStatus.Text = $"{n} 秒后开始鸣响，再点一次可取消";
                 FindButton.Content = $"取消查找（{n}）";
                 await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
             }
@@ -257,4 +385,5 @@ public sealed partial class HeadsetPage : Page
         }
     }
 }
+
 

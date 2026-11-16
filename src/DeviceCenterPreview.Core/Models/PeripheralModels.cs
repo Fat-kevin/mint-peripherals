@@ -151,7 +151,9 @@ public sealed record RemoteControls(
     bool LastPressed = false,
     string ActiveButtons = "",
     bool MappingsEnabled = false,
-    bool ListenerActive = false);
+    bool ListenerActive = false,
+    string VoiceState = "",
+    string? Error = null);
 
 /// <summary>引擎扫描到的已配对遥控器；Id 只在本进程内用于连接，界面显示 Name/Model。</summary>
 public sealed record RemoteDeviceInfo(

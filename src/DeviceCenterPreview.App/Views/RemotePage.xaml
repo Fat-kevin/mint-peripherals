@@ -5,289 +5,345 @@
     xmlns:controls="using:DeviceCenterPreview.App.Controls"
     NavigationCacheMode="Required">
 
+    <!--
+        遥控器工作区：连接/扫描收进一条工具栏；主体是 按键布局 / 映射表 / 语音与检查 三块互斥工作区。
+        编辑器固定在右侧，表格与设备图都获得足够宽度，不再出现被挤扁的单元格。
+    -->
     <ScrollViewer x:Name="PageScroll"
                   HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                   HorizontalContentAlignment="Stretch">
-        <StackPanel x:Name="PageContent" Padding="32,24,32,24" Spacing="12"
-                    HorizontalAlignment="Stretch">
-            <!-- 仪表区：实物图浮空 + 电量环 + 链路操作 + 扫描行 -->
-            <StackPanel Spacing="0">
-                <Grid ColumnSpacing="24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+        <StackPanel x:Name="PageContent" Padding="30,18,30,8" Spacing="0">
 
-                    <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <TextBlock x:Name="TitleText" Text="遥控器"
-                                   Style="{StaticResource AppPageTitleStyle}" />
-                        <TextBlock x:Name="SubtitleText"
-                                   Style="{StaticResource AppPageSubtitleStyle}"
-                                   TextWrapping="Wrap" TextTrimming="None" />
-                        <ComboBox x:Name="DeviceCombo"
-                                  MinWidth="260" PlaceholderText="请选择遥控器" Margin="0,6,0,0" HorizontalAlignment="Left"
-                                  DisplayMemberPath="Name" SelectedValuePath="Id"
-                                  Style="{StaticResource AppComboBoxStyle}"
-                                  SelectionChanged="DeviceCombo_SelectionChanged" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                        <controls:BatteryRing x:Name="RemoteRing" Size="56"
-                                              RingBrush="{ThemeResource AppRemoteBrush}" />
-                        <TextBlock Text="电量" Style="{StaticResource AppCardLabelStyle}"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button x:Name="ConnectButton" Content="连接" MinWidth="104"
-                                Style="{StaticResource AppPrimaryButtonStyle}"
-                                Click="Connect_Click" />
-                        <Button x:Name="DisconnectButton" Content="断开" MinWidth="104"
-                                Style="{StaticResource AppSecondaryButtonStyle}"
-                                Click="Disconnect_Click" />
-                    </StackPanel>
-                </Grid>
-
-                <Border Height="1" Margin="0,10" Background="{ThemeResource AppBorderSubtleBrush}" />
-
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Button x:Name="ScanButton" Content="扫描已配对遥控器"
-                            Style="{StaticResource AppSecondaryButtonStyle}"
-                            Click="Scan_Click" />
-                    <ComboBox x:Name="ScanCombo" Grid.Column="1"
-                              MinWidth="260" MaxWidth="340"
-                              PlaceholderText="扫描结果"
-                              DisplayMemberPath="DisplayName"
-                              Style="{StaticResource AppComboBoxStyle}" />
-                    <TextBlock x:Name="ScanStatus" Grid.Column="2" VerticalAlignment="Center"
-                               Style="{StaticResource AppCardFootnoteStyle}"
-                               Text="尚未扫描"
-                               TextWrapping="Wrap" TextTrimming="None" />
-                </Grid>
-            </StackPanel>
-
-            <Border x:Name="ControlBanner"
-                    Style="{StaticResource AppStatusBannerStyle}"
-                    Visibility="Collapsed">
-                <TextBlock x:Name="ControlBannerText"
-                           Style="{StaticResource AppCardFootnoteStyle}"
-                           TextWrapping="Wrap" TextTrimming="None" />
-            </Border>
-
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <RadioButton Content="按键布局" GroupName="RemoteWorkspace" Tag="layout" IsChecked="True"
-                             Style="{StaticResource AppModeButtonStyle}" Checked="Workspace_Changed" />
-                <RadioButton Content="全部映射" GroupName="RemoteWorkspace" Tag="table"
-                             Style="{StaticResource AppModeButtonStyle}" Checked="Workspace_Changed" />
-                <RadioButton Content="语音与增益" GroupName="RemoteWorkspace" Tag="voice"
-                             Style="{StaticResource AppModeButtonStyle}" Checked="Workspace_Changed" />
-            </StackPanel>
-
-            <TextBlock x:Name="SaveStatus" Style="{StaticResource AppCardFootnoteStyle}"
-                       AutomationProperties.LiveSetting="Polite" />
-
-            <Grid x:Name="BindingWorkspace" ColumnSpacing="20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="382" />
-                </Grid.ColumnDefinitions>
-                <Border x:Name="PhysicalStage" Style="{StaticResource AppCardStyle}" VerticalAlignment="Top">
-                    <Canvas x:Name="PhotoCanvas" Width="200" Height="406" HorizontalAlignment="Center">
-                        <Image Source="ms-appx:///Assets/Devices/rc003.png"
-                               Width="200" Height="406" Stretch="Fill" />
-                    </Canvas>
-                </Border>
-                <Border x:Name="MappingTableStage" Style="{StaticResource AppCardStyle}" Visibility="Collapsed">
-                        <StackPanel x:Name="MappingCenterPanel" Spacing="8">
-                            <Grid ColumnSpacing="8" Margin="6,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="76" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="64" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="按键" Style="{StaticResource AppCardFootnoteStyle}" />
-                                <TextBlock Grid.Column="1" Text="单击" Style="{StaticResource AppCardFootnoteStyle}" />
-                                <TextBlock Grid.Column="2" Text="双击" Style="{StaticResource AppCardFootnoteStyle}" />
-                                <TextBlock Grid.Column="3" Text="长按" Style="{StaticResource AppCardFootnoteStyle}" />
-                                <TextBlock Grid.Column="4" Text="接收" Style="{StaticResource AppCardFootnoteStyle}" />
-                            </Grid>
-                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="10">
-                                <StackPanel x:Name="MappingTablePanel" Spacing="2" />
-                            </Border>
-                            <Grid ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="TableSaveStatus"
-                                           VerticalAlignment="Center"
-                                           Style="{StaticResource AppCardFootnoteStyle}"
-                                           TextWrapping="Wrap" TextTrimming="None" />
-                                <HyperlinkButton Grid.Column="1" Content="打开配置文件夹"
-                                                 VerticalAlignment="Center"
-                                                 Click="OpenConfigFolder_Click" />
-                            </Grid>
-                        </StackPanel>
-                </Border>
-                        <Border Grid.Column="1" Style="{StaticResource AppCardStyle}">
-                            <StackPanel x:Name="MappingRightPanel" Spacing="10">
-                                <TextBlock x:Name="SelectedKeyTitle"
-                                           Style="{StaticResource AppCardTitleStyle}" />
-                                <StackPanel x:Name="GesturePanel" Spacing="8" />
-                                <Border x:Name="ActionEditorCard"
-                                        Style="{StaticResource AppInnerPanelStyle}"
-                                        Visibility="Collapsed">
-                                    <StackPanel x:Name="ActionEditorPanel" Spacing="10" />
-                                </Border>
-                                <TextBlock Text="试运行（不写入）" Style="{StaticResource AppCardLabelStyle}" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button Content="单击" Tag="single" Click="TestGesture_Click"
-                                            Style="{StaticResource AppSecondaryButtonStyle}"
-                                            Padding="10,5" FontSize="12" />
-                                    <Button Content="双击" Tag="double" Click="TestGesture_Click"
-                                            Style="{StaticResource AppSecondaryButtonStyle}"
-                                            Padding="10,5" FontSize="12" />
-                                    <Button Content="长按" Tag="long" Click="TestGesture_Click"
-                                            Style="{StaticResource AppSecondaryButtonStyle}"
-                                            Padding="10,5" FontSize="12" />
-                                </StackPanel>
-                                <TextBlock Text="选择手势可编辑动作，选定后立即保存。"
-                                           Style="{StaticResource AppCardFootnoteStyle}"
-                                           TextWrapping="Wrap" TextTrimming="None" />
-                                <TextBlock x:Name="MappingSaveStatus" Style="{StaticResource AppCardFootnoteStyle}" />
-                                <Border Height="1" Background="{ThemeResource AppBorderBrush}" Margin="0,8" />
-                            <Button x:Name="ReceiveTestButton"
-                                    Content="开始接收测试（10 秒）"
-                                    HorizontalAlignment="Stretch"
-                                    Style="{StaticResource AppSecondaryButtonStyle}"
-                                    Click="ReceiveTest_Click" />
-                            <TextBlock x:Name="ReceiveStatus"
-                                       Style="{StaticResource AppCardFootnoteStyle}"
-                                       TextWrapping="Wrap" TextTrimming="None"
-                                       Text="测试只确认按键信号是否到达电脑，不执行动作。" />
-                            </StackPanel>
-                        </Border>
+            <!-- 页头 -->
+            <Grid>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="设备 03 · 语音与按键" Style="{StaticResource BenchLabelStyle}" />
+                    <TextBlock x:Name="TitleText" Text="遥控器"
+                               Style="{StaticResource BenchPageTitleStyle}" />
+                    <TextBlock x:Name="SubtitleText" Text="正在读取…"
+                               Style="{StaticResource BenchMetaStyle}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <Button x:Name="ConnectButton" Content="连接"
+                            Style="{StaticResource BenchInkButtonStyle}"
+                            Click="Connect_Click" />
+                    <Button x:Name="DisconnectButton" Content="断开"
+                            Style="{StaticResource BenchOutlineButtonStyle}"
+                            Click="Disconnect_Click" />
+                </StackPanel>
             </Grid>
 
-            <Border x:Name="VoiceWorkspace" Style="{StaticResource AppCardStyle}" Visibility="Collapsed">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="语音与增益" Style="{StaticResource AppSectionTitleStyle}" />
+            <!-- 连接工具栏 -->
+            <Grid Margin="0,16,0,0" ColumnSpacing="14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="设备" Style="{StaticResource BenchLabelStyle}" />
+                    <ComboBox x:Name="DeviceCombo" Width="230"
+                              DisplayMemberPath="Name" SelectedValuePath="Id"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="DeviceCombo_SelectionChanged" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock Text="扫描" Style="{StaticResource BenchLabelStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="ScanButton" Content="扫描设备"
+                                Style="{StaticResource BenchOutlineButtonStyle}"
+                                Click="Scan_Click" />
+                        <ComboBox x:Name="ScanCombo" Width="190"
+                                  PlaceholderText="扫描结果"
+                                  DisplayMemberPath="DisplayName"
+                                  Style="{StaticResource BenchComboBoxStyle}" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock x:Name="ScanStatus" Grid.Column="2" Text="尚未扫描"
+                           Style="{StaticResource BenchFootnoteStyle}"
+                           VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Bottom" Margin="0,0,0,4">
+                    <controls:BatteryRing x:Name="RemoteRing" Size="40"
+                                          RingBrush="{ThemeResource AppInkBrush}" />
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="电量" Style="{StaticResource BenchLabelStyle}" />
+                        <TextBlock Text="充电中会以闪电标记"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
 
-                    <Grid ColumnSpacing="20">
+            <Border x:Name="ControlBanner" Background="{ThemeResource AppWarningTintBrush}"
+                    CornerRadius="6" Padding="12,9" Margin="0,12,0,0" Visibility="Collapsed">
+                <TextBlock x:Name="ControlBannerText"
+                           Style="{StaticResource BenchFootnoteStyle}"
+                           Foreground="{ThemeResource AppWarningBrush}" />
+            </Border>
+
+            <!-- 工作区切换 -->
+            <Border Background="{ThemeResource AppInsetBrush}" CornerRadius="6" Padding="3"
+                    HorizontalAlignment="Left" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button x:Name="TabLayout" Content="按键布局" Tag="layout"
+                            Style="{StaticResource BenchSegmentButtonStyle}"
+                            Click="Workspace_Changed" />
+                    <Button x:Name="TabVoice" Content="语音与检查" Tag="voice"
+                            Style="{StaticResource BenchSegmentButtonStyle}"
+                            Click="Workspace_Changed" />
+                </StackPanel>
+            </Border>
+
+            <!-- 按键布局 / 映射表 -->
+            <Grid x:Name="BindingWorkspace" Margin="0,20,0,0" ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="330" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 布局 -->
+                <Border x:Name="PhysicalStage" Grid.Column="0" Style="{StaticResource BenchPanelStyle}" VerticalAlignment="Top">
+                    <StackPanel Spacing="0">
+                    <Grid>
+                        <TextBlock Text="按键布局" Style="{StaticResource BenchSectionTitleStyle}" />
+                        <TextBlock Text="点击机上热点选择按键" Style="{StaticResource BenchFootnoteStyle}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,8,0,12" />
+                    <Viewbox Width="120" Height="244" HorizontalAlignment="Center">
+                        <Canvas x:Name="PhotoCanvas" Width="200" Height="406">
+                            <Image Source="ms-appx:///Assets/Devices/rc003.png"
+                                   Width="200" Height="406" Stretch="Fill" />
+                        </Canvas>
+                    </Viewbox>
+                    <TextBlock Text="点选按键后，在右侧编辑单击 / 双击 / 长按；变更自动保存。"
+                               Style="{StaticResource BenchFootnoteStyle}" HorizontalAlignment="Center"
+                               Margin="0,8,0,0" />
+
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,16,0,12" />
+                    <TextBlock Text="全部按键" Style="{StaticResource BenchLabelStyle}" />
+                    <Grid x:Name="KeyChipGrid" ColumnSpacing="6" RowSpacing="4" Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Spacing="12">
-                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="音频路由" Style="{StaticResource AppCardLabelStyle}" />
-                                    <ComboBox x:Name="AudioCombo"
-                                              HorizontalAlignment="Stretch"
-                                              PlaceholderText="未接入"
-                                              DisplayMemberPath="Name"
-                                              Style="{StaticResource AppComboBoxStyle}"
-                                              SelectionChanged="Audio_SelectionChanged" />
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="语音工具" Style="{StaticResource AppCardLabelStyle}" />
-                                    <ComboBox x:Name="ToolCombo"
-                                              HorizontalAlignment="Stretch"
-                                              PlaceholderText="未选择"
-                                              Style="{StaticResource AppComboBoxStyle}"
-                                              SelectionChanged="Tool_SelectionChanged">
-                                        <ComboBoxItem Content="豆包" Tag="doubao" />
-                                        <ComboBoxItem Content="微信输入法" Tag="wechat" />
-                                        <ComboBoxItem Content="Vokie" Tag="vokie" />
-                                        <ComboBoxItem Content="其他" Tag="other" />
-                                    </ComboBox>
-                                </StackPanel>
-                            </Border>
-
-                            <Border x:Name="ToolHintCard" Style="{StaticResource AppInnerPanelStyle}"
-                                    Visibility="Collapsed" Padding="14">
-                                <StackPanel Spacing="4">
-                                    <TextBlock x:Name="ToolHintTitle" Style="{StaticResource AppCardTitleStyle}" />
-                                    <TextBlock x:Name="HotkeyText" Style="{StaticResource AppCardFootnoteStyle}"
-                                               TextWrapping="Wrap" TextTrimming="None" />
-                                    <TextBlock x:Name="ToolHintText" Style="{StaticResource AppCardFootnoteStyle}"
-                                               TextWrapping="Wrap" TextTrimming="None" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Spacing="12">
-                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
-                                <StackPanel Spacing="6">
-                                    <Grid ColumnSpacing="12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="麦克风增益" Style="{StaticResource AppCardLabelStyle}" />
-                                        <TextBlock x:Name="GainValueText" Grid.Column="1"
-                                                   Style="{StaticResource AppCardTitleStyle}" />
-                                    </Grid>
-                                    <Slider x:Name="GainSlider"
-                                            Style="{StaticResource AppSliderStyle}"
-                                            Minimum="0" Maximum="24" StepFrequency="1"
-                                            ValueChanged="Gain_ValueChanged" />
-                                    <TextBlock Text="引擎上限 24 dB；页面不回读旧值，移动滑块后再应用。"
-                                               Style="{StaticResource AppCardFootnoteStyle}"
-                                               TextWrapping="Wrap" TextTrimming="None" />
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button x:Name="VoiceTestButton" Content="语音状态"
-                                                Style="{StaticResource AppSecondaryButtonStyle}"
-                                                Click="VoiceTest_Click" />
-                                        <TextBlock x:Name="VoiceStatus" VerticalAlignment="Center"
-                                                   Style="{StaticResource AppCardLabelStyle}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource AppInnerPanelStyle}" Padding="14">
-                                <StackPanel Spacing="4">
-                                    <ToggleSwitch x:Name="FullKeySwitch"
-                                                  HorizontalAlignment="Stretch"
-                                                  Style="{StaticResource AppToggleSwitchStyle}"
-                                                  Toggled="FullKey_Toggled" />
-                                    <TextBlock Text="当前版本不可用时仍会显示原因，不假装支持。"
-                                               Style="{StaticResource AppCardFootnoteStyle}"
-                                               TextWrapping="Wrap" TextTrimming="None" />
-                                </StackPanel>
-                            </Border>
-
-                            <TextBlock x:Name="InputStatus"
-                                       Style="{StaticResource AppCardFootnoteStyle}"
-                                       TextWrapping="Wrap" TextTrimming="None" />
-
-                            <Grid ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button x:Name="ApplyButton" Content="应用增益"
-                                        Style="{StaticResource AppSecondaryButtonStyle}"
-                                        Click="Apply_Click" />
-                            </Grid>
-                        </StackPanel>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                     </Grid>
 
-                    <TextBlock Style="{StaticResource AppCardFootnoteStyle}"
-                               TextWrapping="Wrap" TextTrimming="None"
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,18,0,14" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="ReceiveTestButton" Content="开始接收测试（10 秒）"
+                                Style="{StaticResource BenchGhostButtonStyle}"
+                                Click="ReceiveTest_Click" />
+                        <TextBlock x:Name="ReceiveStatus"
+                                   Style="{StaticResource BenchFootnoteStyle}"
+                                   VerticalAlignment="Center"
+                                   Text="只确认信号是否到达电脑，不执行动作。" />
+                    </StackPanel>
+                    <TextBlock x:Name="VoiceReceiveText"
+                               Style="{StaticResource BenchFootnoteStyle}" Margin="0,6,0,0"
+                               Text="语音键：未测试（ATVV 语音会话，不进映射表）" />
+                    <TextBlock x:Name="RemoteErrorText"
+                               Style="{StaticResource BenchFootnoteStyle}"
+                               Foreground="{ThemeResource AppDangerBrush}"
+                               Margin="0,4,0,0" Visibility="Collapsed" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 映射表 -->
+                <StackPanel x:Name="MappingTableStage" Grid.Column="0" Spacing="0"
+                            Visibility="Collapsed">
+                    <Grid>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="01" Style="{StaticResource BenchGutterNumberStyle}" />
+                            <TextBlock Text="映射表" Style="{StaticResource BenchLabelStyle}" />
+                        </StackPanel>
+                        <TextBlock Text="单击 / 双击 / 长按 · 点击单元格替换"
+                                   Style="{StaticResource BenchFootnoteStyle}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Grid>
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,8,0,12" />
+                    <Grid x:Name="MappingCenterPanel">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid ColumnSpacing="8" Margin="6,0,6,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="56" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="按键" Style="{StaticResource BenchLabelStyle}" />
+                            <TextBlock Grid.Column="1" Text="单击" Style="{StaticResource BenchLabelStyle}" />
+                            <TextBlock Grid.Column="2" Text="双击" Style="{StaticResource BenchLabelStyle}" />
+                            <TextBlock Grid.Column="3" Text="长按" Style="{StaticResource BenchLabelStyle}" />
+                            <TextBlock Grid.Column="4" Text="接收" Style="{StaticResource BenchLabelStyle}" />
+                        </Grid>
+                        <StackPanel x:Name="MappingTablePanel" Grid.Row="1" Spacing="2" />
+                        <Grid Grid.Row="2" ColumnSpacing="10" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TableSaveStatus" VerticalAlignment="Center"
+                                       Style="{StaticResource BenchFootnoteStyle}" />
+                            <HyperlinkButton Grid.Column="1" Content="打开配置文件夹"
+                                             Style="{StaticResource BenchHyperlinkStyle}"
+                                             VerticalAlignment="Center"
+                                             Click="OpenConfigFolder_Click" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+
+                <!-- 选中键编辑器 -->
+                <Border x:Name="MappingRightPanel" Grid.Column="1"
+                        Background="{ThemeResource AppCardBrush}"
+                        BorderBrush="{ThemeResource AppBorderSubtleBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="16"
+                        VerticalAlignment="Top">
+                    <StackPanel Spacing="10">
+                        <Border x:Name="ActionEditorCard"
+                                Background="{ThemeResource AppInsetBrush}"
+                                CornerRadius="8" Padding="12"
+                                Visibility="Collapsed">
+                            <StackPanel x:Name="ActionEditorPanel" Spacing="8" />
+                        </Border>
+
+                        <TextBlock x:Name="SelectedKeyTitle"
+                                   Style="{StaticResource BenchSectionTitleStyle}" />
+                        <StackPanel x:Name="GesturePanel" Spacing="6" />
+                        <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,4" />
+                        <TextBlock Text="试运行（不写入）" Style="{StaticResource BenchLabelStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button Content="单击" Tag="single" Click="TestGesture_Click"
+                                    Style="{StaticResource BenchGhostButtonStyle}" />
+                            <Button Content="双击" Tag="double" Click="TestGesture_Click"
+                                    Style="{StaticResource BenchGhostButtonStyle}" />
+                            <Button Content="长按" Tag="long" Click="TestGesture_Click"
+                                    Style="{StaticResource BenchGhostButtonStyle}" />
+                        </StackPanel>
+                        <TextBlock x:Name="MappingSaveStatus"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 语音与检查 -->
+            <Grid x:Name="VoiceWorkspace" Margin="0,20,0,0" ColumnSpacing="40"
+                  Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="340" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="0">
+                    <Grid>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="02" Style="{StaticResource BenchGutterNumberStyle}" />
+                            <TextBlock Text="语音链路" Style="{StaticResource BenchLabelStyle}" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,8,0,12" />
+
+                    <TextBlock Text="音频路由" Style="{StaticResource BenchLabelStyle}" />
+                    <ComboBox x:Name="AudioCombo" Margin="0,6,0,0" Width="320"
+                              HorizontalAlignment="Left" PlaceholderText="未接入"
+                              DisplayMemberPath="Name"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="Audio_SelectionChanged" />
+
+                    <TextBlock Text="语音工具" Style="{StaticResource BenchLabelStyle}"
+                               Margin="0,16,0,0" />
+                    <ComboBox x:Name="ToolCombo" Margin="0,6,0,0" Width="320"
+                              HorizontalAlignment="Left" PlaceholderText="未选择"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="Tool_SelectionChanged">
+                        <ComboBoxItem Content="豆包" Tag="doubao" />
+                        <ComboBoxItem Content="微信输入法" Tag="wechat" />
+                        <ComboBoxItem Content="Vokie" Tag="vokie" />
+                        <ComboBoxItem Content="其他" Tag="other" />
+                    </ComboBox>
+
+                    <Border x:Name="ToolHintCard" Background="{ThemeResource AppInsetBrush}"
+                            CornerRadius="8" Padding="12" Margin="0,14,0,0">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="ToolHintTitle" Style="{StaticResource BenchValueStyle}" />
+                            <TextBlock x:Name="HotkeyText" Style="{StaticResource BenchFootnoteStyle}" />
+                            <TextBlock x:Name="ToolHintText" Style="{StaticResource BenchFootnoteStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,18,0,12" />
+                    <TextBlock Style="{StaticResource BenchFootnoteStyle}"
                                Text="语音链路依赖 VB-CABLE：渲染端点选 CABLE Input，输入法麦克风选 CABLE Output。全按键开启时可能需要管理员 Helper。" />
                 </StackPanel>
-            </Border>
+
+                <StackPanel Grid.Column="1" Spacing="0">
+                    <Grid>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="03" Style="{StaticResource BenchGutterNumberStyle}" />
+                            <TextBlock Text="增益与状态" Style="{StaticResource BenchLabelStyle}" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,8,0,12" />
+
+                    <Grid>
+                        <TextBlock Text="麦克风增益" Style="{StaticResource BenchLabelStyle}" />
+                        <TextBlock x:Name="GainValueText" Text="—"
+                                   Style="{StaticResource BenchValueStyle}"
+                                   HorizontalAlignment="Right" />
+                    </Grid>
+                    <Slider x:Name="GainSlider" Style="{StaticResource AppSliderStyle}"
+                            Margin="0,6,0,0" Minimum="0" Maximum="24" StepFrequency="1"
+                            ValueChanged="Gain_ValueChanged" />
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                        <Button x:Name="ApplyButton" Content="应用增益"
+                                Style="{StaticResource BenchInkButtonStyle}"
+                                Click="Apply_Click" />
+                        <Button x:Name="VoiceTestButton" Content="语音状态"
+                                Style="{StaticResource BenchGhostButtonStyle}"
+                                Click="VoiceTest_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="VoiceStatus" Style="{StaticResource BenchFootnoteStyle}"
+                               Margin="0,6,0,0" />
+
+                    <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,16,0,14" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="全按键模式" Style="{StaticResource BenchValueStyle}" />
+                            <TextBlock Text="不可用时显示原因"
+                                       Style="{StaticResource BenchFootnoteStyle}" />
+                        </StackPanel>
+                        <ToggleSwitch x:Name="FullKeySwitch" Grid.Column="1"
+                                      Style="{StaticResource BenchToggleSwitchStyle}"
+                                      VerticalAlignment="Center" Toggled="FullKey_Toggled" />
+                    </Grid>
+
+                    <TextBlock x:Name="InputStatus" Style="{StaticResource BenchFootnoteStyle}"
+                               Margin="0,14,0,0" />
+                    <TextBlock x:Name="SaveStatus" Style="{StaticResource BenchFootnoteStyle}"
+                               Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </Page>

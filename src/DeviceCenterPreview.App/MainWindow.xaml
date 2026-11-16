@@ -5,91 +5,211 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     Title="薄荷外设">
 
+    <!--
+        台面外壳：左侧常驻设备栏（224）+ 内容区。
+        设备栏同时承担导航与实时状态：设备名、连接状态、电量都在这里，不需要专门的“状态页”。
+    -->
     <Grid x:Name="Root" Background="{ThemeResource AppCanvasBrush}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="248" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource AppTitleBarBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="10" Margin="16,0,0,0"
-                        VerticalAlignment="Center">
-                <Image Source="ms-appx:///Assets/PeripheralHub-16.png" Width="16" Height="16" />
-                <TextBlock Text="薄荷外设"
-                           VerticalAlignment="Center"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{ThemeResource AppTextPrimaryBrush}" />
+        <!-- ===== 左侧设备栏 ===== -->
+        <Grid Grid.Column="0" Background="{ThemeResource AppChromeBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Width="1" HorizontalAlignment="Right" Grid.RowSpan="3"
+                    Background="{ThemeResource AppBorderSubtleBrush}" />
+
+            <!-- 品牌 -->
+            <StackPanel Grid.Row="0" Margin="22,22,22,0" Spacing="3">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Image Source="ms-appx:///Assets/PeripheralHub-24.png" Width="18" Height="18" />
+                    <TextBlock Text="薄荷外设" FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                </StackPanel>
+                <TextBlock Text="设备控制台" Style="{StaticResource BenchLabelStyle}"
+                           Margin="26,0,0,0" />
             </StackPanel>
 
+            <!-- 导航 + 设备 -->
+            <StackPanel Grid.Row="1" Margin="14,26,14,0" Spacing="4">
+                <Button x:Name="OverviewNav" Style="{StaticResource BenchNavItemStyle}"
+                        AutomationProperties.Name="设备总览" Click="Overview_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xE80F;" FontSize="14"
+                                  Foreground="{ThemeResource AppTextSecondaryBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock x:Name="OverviewNavText" Text="设备总览" FontSize="13.5"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    </StackPanel>
+                </Button>
+
+                <TextBlock Text="设备" Style="{StaticResource BenchLabelStyle}"
+                           Margin="12,20,0,8" />
+
+                <!-- 耳机 -->
+                <Button x:Name="HeadsetNav" Style="{StaticResource BenchSidebarItemStyle}"
+                        Tag="headset" Click="DeviceNav_Click"
+                        AutomationProperties.Name="耳机工作区">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="8"
+                                Background="{ThemeResource AppInsetBrush}">
+                            <FontIcon Glyph="{StaticResource AppIconHeadsetGlyph}" FontSize="15"
+                                      Foreground="{ThemeResource AppHeadsetBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                    Spacing="2">
+                            <TextBlock x:Name="HeadsetNavName" Margin="0,0,6,0" Text="耳机" FontSize="13.5"
+                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                       Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Ellipse x:Name="HeadsetNavDot" Width="5" Height="5"
+                                         VerticalAlignment="Center"
+                                         Fill="{ThemeResource AppOfflineBrush}" />
+                                <TextBlock x:Name="HeadsetNavStatus" Text="未连接"
+                                           Style="{StaticResource BenchFootnoteStyle}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock x:Name="HeadsetNavBattery" Grid.Column="2" Text="—"
+                                   FontSize="12.5" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    </Grid>
+                </Button>
+
+                <!-- 鼠标 -->
+                <Button x:Name="MouseNav" Style="{StaticResource BenchSidebarItemStyle}"
+                        Tag="mouse" Click="DeviceNav_Click"
+                        AutomationProperties.Name="鼠标工作区">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="8"
+                                Background="{ThemeResource AppInsetBrush}">
+                            <FontIcon Glyph="{StaticResource AppIconMouseGlyph}" FontSize="15"
+                                      Foreground="{ThemeResource AppMouseBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                    Spacing="2">
+                            <TextBlock x:Name="MouseNavName" Margin="0,0,6,0" Text="鼠标" FontSize="13.5"
+                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                       Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Ellipse x:Name="MouseNavDot" Width="5" Height="5"
+                                         VerticalAlignment="Center"
+                                         Fill="{ThemeResource AppOfflineBrush}" />
+                                <TextBlock x:Name="MouseNavStatus" Text="未连接"
+                                           Style="{StaticResource BenchFootnoteStyle}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock x:Name="MouseNavBattery" Grid.Column="2" Text="—"
+                                   FontSize="12.5" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    </Grid>
+                </Button>
+
+                <!-- 遥控器 -->
+                <Button x:Name="RemoteNav" Style="{StaticResource BenchSidebarItemStyle}"
+                        Tag="remote" Click="DeviceNav_Click"
+                        AutomationProperties.Name="遥控器工作区">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="8"
+                                Background="{ThemeResource AppInsetBrush}">
+                            <FontIcon Glyph="{StaticResource AppIconRemoteGlyph}" FontSize="15"
+                                      Foreground="{ThemeResource AppRemoteBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                    Spacing="2">
+                            <TextBlock x:Name="RemoteNavName" Margin="0,0,6,0" Text="遥控器" FontSize="13.5"
+                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                       Foreground="{ThemeResource AppTextPrimaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Ellipse x:Name="RemoteNavDot" Width="5" Height="5"
+                                         VerticalAlignment="Center"
+                                         Fill="{ThemeResource AppOfflineBrush}" />
+                                <TextBlock x:Name="RemoteNavStatus" Text="未连接"
+                                           Style="{StaticResource BenchFootnoteStyle}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock x:Name="RemoteNavBattery" Grid.Column="2" Text="—"
+                                   FontSize="12.5" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <!-- 底部：设置 + 引擎 -->
+            <StackPanel Grid.Row="2" Margin="14,0,14,14" Spacing="8">
+                <Button x:Name="SettingsNav" Style="{StaticResource BenchNavItemStyle}"
+                        AutomationProperties.Name="设置" Click="Settings_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="{StaticResource AppIconSettingsGlyph}" FontSize="14"
+                                  Foreground="{ThemeResource AppTextSecondaryBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock x:Name="SettingsNavText" Text="设置" FontSize="13.5"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                    </StackPanel>
+                </Button>
+                <Border Background="{ThemeResource AppInsetBrush}" CornerRadius="6" Padding="10,8">
+                    <StackPanel Spacing="3">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                     Fill="{ThemeResource AppSuccessBrush}" />
+                            <TextBlock Text="本地引擎运行中" FontSize="10.5"
+                                       VerticalAlignment="Center"
+                                       Foreground="{ThemeResource AppTextSecondaryBrush}" />
+                        </StackPanel>
+                        <TextBlock x:Name="EngineVersionText" Text="v1.0.8 · SPP / HID++ / BLE"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </Grid>
 
-        <muxc:NavigationView x:Name="Nav" Grid.Row="1"
-                             IsBackButtonVisible="Collapsed"
-                             IsSettingsVisible="False"
-                             IsPaneToggleButtonVisible="False"
-                             PaneDisplayMode="Left"
-                             OpenPaneLength="184"
-                             IsPaneOpen="True"
-                             AlwaysShowHeader="False"
-                             SelectionChanged="Nav_SelectionChanged">
+        <!-- ===== 内容区 ===== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <muxc:NavigationView.PaneHeader>
-                <Border Height="16" />
-            </muxc:NavigationView.PaneHeader>
+            <!-- 拖拽区（标题栏本身无文字，标题在页面里） -->
+            <Grid x:Name="DragRegion" Grid.Row="0" Background="Transparent" />
 
-            <muxc:NavigationView.MenuItems>
-                <muxc:NavigationViewItem Content="总览" Tag="hub" IsSelected="True"
-                                         Style="{StaticResource AppNavigationViewItemStyle}">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontSize="18" Glyph="{StaticResource AppIconHubGlyph}" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-                <muxc:NavigationViewItem Content="耳机" Tag="headset"
-                                         Style="{StaticResource AppNavigationViewItemStyle}">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontSize="18" Glyph="{StaticResource AppIconHeadsetGlyph}" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-                <muxc:NavigationViewItem Content="鼠标" Tag="mouse"
-                                         Style="{StaticResource AppNavigationViewItemStyle}">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontSize="18" Glyph="{StaticResource AppIconMouseGlyph}" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-                <muxc:NavigationViewItem Content="遥控器" Tag="remote"
-                                         Style="{StaticResource AppNavigationViewItemStyle}">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontSize="18" Glyph="{StaticResource AppIconRemoteGlyph}" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-            </muxc:NavigationView.MenuItems>
+            <muxc:InfoBar x:Name="AppInfoBar" Grid.Row="1"
+                          IsOpen="False" IsClosable="True" Severity="Informational"
+                          HorizontalAlignment="Stretch" Margin="32,0,32,8" />
 
-            <muxc:NavigationView.FooterMenuItems>
-                <muxc:NavigationViewItem x:Name="SettingsNav" Content="设置" Tag="settings"
-                                         Style="{StaticResource AppNavigationViewItemStyle}">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontSize="18" Glyph="{StaticResource AppIconSettingsGlyph}" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-            </muxc:NavigationView.FooterMenuItems>
-
-            <Grid Background="{ThemeResource AppCanvasBrush}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <muxc:InfoBar x:Name="AppInfoBar"
-                              Grid.Row="0"
-                              IsOpen="False"
-                              IsClosable="True"
-                              Severity="Informational"
-                              HorizontalAlignment="Stretch"
-                              Margin="32,8,32,0" />
-
-                <muxc:Frame x:Name="ContentFrame" Grid.Row="1" />
-            </Grid>
-        </muxc:NavigationView>
+            <muxc:Frame x:Name="ContentFrame" Grid.Row="2" />
+        </Grid>
     </Grid>
 </Window>
+
