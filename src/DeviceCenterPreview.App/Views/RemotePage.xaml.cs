@@ -203,7 +203,7 @@ public sealed partial class RemotePage : Page, IThemeAware
             DeviceCombo.SelectedValue = selected;
         }
 
-        TitleText.Text = $"遥控器 · {snapshot.DisplayName}";
+        TitleText.Text = snapshot.IsConnected ? snapshot.DisplayName : "遥控器";
         SubtitleText.Text = snapshot.StatusText;
         RemoteRing.BatteryValue = snapshot.BatteryPercent ?? 0;
         RemoteRing.Charging = snapshot.Charging == ChargingState.Charging;
@@ -214,7 +214,9 @@ public sealed partial class RemotePage : Page, IThemeAware
             _ => ResourceBrush("AppRemoteBrush"),
         };
         ControlBannerText.Text = snapshot.ControlHint ?? "";
-        ControlBanner.Visibility = snapshot.ControlsAvailable && snapshot.WriteAllowed
+        ControlBanner.Visibility = string.IsNullOrWhiteSpace(snapshot.ControlHint) ||
+                                   snapshot.ControlHint == snapshot.StatusText ||
+                                   (snapshot.ControlsAvailable && snapshot.WriteAllowed)
             ? Visibility.Collapsed
             : Visibility.Visible;
 
@@ -566,6 +568,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         };
         ToolHintTitle.Text = title;
         ToolHintText.Text = body;
+        ToolHintCard.Visibility = Visibility.Visible;
     }
 
     private async void FullKey_Toggled(object sender, RoutedEventArgs e)
@@ -675,17 +678,18 @@ public sealed partial class RemotePage : Page, IThemeAware
         {
             var active = _activeButtons.Contains(id);
             var hovered = string.Equals(id, _hoveredKeyId, StringComparison.Ordinal);
+            var selected = string.Equals(id, _selectedKeyId, StringComparison.Ordinal);
             button.Background = active
                 ? ResourceBrush("AppRemoteTintBrush")
-                : hovered
+                : hovered || selected
                     ? ResourceBrush("AppIonTintBrush")
                     : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             button.BorderBrush = active
                 ? ResourceBrush("AppRemoteBrush")
-                : hovered
+                : hovered || selected
                     ? ResourceBrush("AppIonBrush")
                     : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            button.BorderThickness = hovered || active ? new Thickness(2) : new Thickness(0);
+            button.BorderThickness = hovered || active || selected ? new Thickness(2) : new Thickness(0);
         }
     }
 
@@ -703,8 +707,23 @@ public sealed partial class RemotePage : Page, IThemeAware
     {
         if (sender is Button { Tag: string keyId })
         {
+            ActionEditorCard.Visibility = Visibility.Collapsed;
             SelectKey(keyId);
         }
+    }
+
+    private void Workspace_Changed(object sender, RoutedEventArgs e)
+    {
+        if (BindingWorkspace is null || PhysicalStage is null || MappingTableStage is null || VoiceWorkspace is null ||
+            sender is not RadioButton { Tag: string workspace })
+        {
+            return;
+        }
+
+        BindingWorkspace.Visibility = workspace == "voice" ? Visibility.Collapsed : Visibility.Visible;
+        PhysicalStage.Visibility = workspace == "layout" ? Visibility.Visible : Visibility.Collapsed;
+        MappingTableStage.Visibility = workspace == "table" ? Visibility.Visible : Visibility.Collapsed;
+        VoiceWorkspace.Visibility = workspace == "voice" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void BuildMappingTable()
@@ -773,7 +792,7 @@ public sealed partial class RemotePage : Page, IThemeAware
 
     private void UpdateMappingTable()
     {
-        var signature = string.Join("|", TableKeys.SelectMany(key =>
+        var signature = $"{_engineConnected}|" + string.Join("|", TableKeys.SelectMany(key =>
             GestureLabels.Select(gesture =>
                 $"{key.Id}:{gesture.Id}:{(_mappingMap.TryGetValue((key.Id, gesture.Id), out var mapping) ? mapping.ActionId ?? mapping.Action : "disabled")}")));
         if (signature == _lastMappingSignature)
@@ -794,11 +813,11 @@ public sealed partial class RemotePage : Page, IThemeAware
                 }
 
                 _mappingMap.TryGetValue((keyId, gestureId), out var mapping);
-                var action = mapping?.Action ?? "禁用";
-                var configured = action != "禁用";
+                var action = mapping?.Action ?? (_engineConnected ? "禁用" : "未读取");
+                var configured = mapping is not null && action != "禁用";
                 cell.Content = action;
                 cell.Foreground = configured ? configuredBrush : disabledBrush;
-                ToolTipService.SetToolTip(cell, configured ? action : "未配置（点击设置）");
+                ToolTipService.SetToolTip(cell, action);
             }
         }
     }
@@ -928,6 +947,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         MappingSaveStatus.Text = result.Ok
             ? $"已自动保存 · {DateTime.Now:HH:mm:ss}"
             : result.Message ?? "保存失败";
+        TableSaveStatus.Text = MappingSaveStatus.Text;
         if (!result.Ok)
         {
             return;
@@ -1074,13 +1094,14 @@ public sealed partial class RemotePage : Page, IThemeAware
             Grid.SetColumn(actionText, 1);
             grid.Children.Add(actionText);
 
-            var row = new Border
+            var row = new Button
             {
-                Child = grid,
-                Padding = new Thickness(10, 7, 10, 7),
-                CornerRadius = new CornerRadius(6),
-                Background = ResourceBrush("AppInputBrush"),
+                Content = grid,
+                Style = (Style)Application.Current.Resources["AppSecondaryButtonStyle"],
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
             };
+            row.Click += (_, _) => OpenActionEditor(_selectedKeyId, gestureId);
             GesturePanel.Children.Add(row);
             _gestureActionTexts[gestureId] = actionText;
         }
@@ -1097,7 +1118,7 @@ public sealed partial class RemotePage : Page, IThemeAware
         foreach (var (gestureId, _) in GestureLabels)
         {
             _mappingMap.TryGetValue((_selectedKeyId, gestureId), out var mapping);
-            var action = mapping?.Action ?? "禁用";
+            var action = mapping?.Action ?? (_engineConnected ? "禁用" : "未读取");
             if (_gestureActionTexts.TryGetValue(gestureId, out var text))
             {
                 text.Text = action;

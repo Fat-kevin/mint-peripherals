@@ -243,7 +243,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var item = Nav.MenuItems
+        var item = tag == "settings" ? SettingsNav : Nav.MenuItems
             .OfType<NavigationViewItem>()
             .FirstOrDefault(candidate => candidate.Tag is string candidateTag && candidateTag == tag);
         if (item is null || ReferenceEquals(Nav.SelectedItem, item))

@@ -22,6 +22,7 @@ public sealed partial class SettingsPage : Page
         "跟随系统",
     ];
 
+    private readonly FrameworkElement[] _categories;
     private bool _loading;
     private bool _resetArmed;
     private DispatcherTimer? _resetTimer;
@@ -30,11 +31,27 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
+        _categories = [Category0, Category1, Category2, Category3, Category4, Category5];
         ThemeCombo.ItemsSource = ThemeModeLabels;
         LowBatteryThresholdCombo.ItemsSource = new[] { 0, 10, 15, 20, 25, 30, 40, 50, 60, 80 };
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         PageScroll.SizeChanged += (_, _) => PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
+    }
+
+    private void Category_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_categories is null || sender is not RadioButton { Tag: string tag } ||
+            !int.TryParse(tag, out var selected))
+        {
+            return;
+        }
+
+        for (var index = 0; index < _categories.Length; index++)
+        {
+            _categories[index].Visibility = index == selected ? Visibility.Visible : Visibility.Collapsed;
+        }
+        PageScroll.ChangeView(null, 0, null, true);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

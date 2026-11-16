@@ -7,7 +7,7 @@
 
     <Style x:Key="AppOverlineStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="LineHeight" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="CharacterSpacing" Value="80" />
@@ -16,7 +16,7 @@
 
     <Style x:Key="AppPageTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
-        <Setter Property="FontSize" Value="34" />
+        <Setter Property="FontSize" Value="30" />
         <Setter Property="LineHeight" Value="40" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
@@ -57,7 +57,7 @@
 
     <Style x:Key="AppCardLabelStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="LineHeight" Value="16" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextSecondaryBrush}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -65,7 +65,7 @@
 
     <Style x:Key="AppCardFootnoteStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="LineHeight" Value="16" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextTertiaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
@@ -94,7 +94,7 @@
 
     <Style x:Key="AppCaptionStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppTextFont}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="LineHeight" Value="16" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextTertiaryBrush}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />

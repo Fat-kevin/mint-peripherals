@@ -134,7 +134,7 @@ public sealed partial class MousePage : Page
             DeviceCombo.SelectedValue = selected;
         }
 
-        TitleText.Text = $"鼠标 · {snapshot.DisplayName}";
+        TitleText.Text = snapshot.IsConnected ? snapshot.DisplayName : "鼠标";
         var artwork = DeviceArtwork.ForMouse(snapshot.DisplayName);
         if (artwork != _lastArtworkPath)
         {
@@ -157,7 +157,9 @@ public sealed partial class MousePage : Page
             _ => ResourceBrush("AppMouseBrush"),
         };
         ControlBannerText.Text = snapshot.ControlHint ?? "";
-        ControlBanner.Visibility = snapshot.ControlsAvailable && snapshot.WriteAllowed
+        ControlBanner.Visibility = string.IsNullOrWhiteSpace(snapshot.ControlHint) ||
+                                   snapshot.ControlHint == snapshot.StatusText ||
+                                   (snapshot.ControlsAvailable && snapshot.WriteAllowed)
             ? Visibility.Collapsed
             : Visibility.Visible;
 
@@ -306,7 +308,7 @@ public sealed partial class MousePage : Page
             ButtonMappingScroll.Visibility = Visibility.Collapsed;
             ButtonMappingEmpty.Visibility = Visibility.Visible;
             ButtonMappingEmpty.Text = "控制通道尚未接入；接入后按设备返回的按键显示。";
-            ButtonMappingHint.Text = "不显示空白按键行。";
+            ButtonMappingHint.Text = "";
             foreach (var combo in _buttonCombos)
             {
                 combo.IsEnabled = false;
@@ -344,7 +346,7 @@ public sealed partial class MousePage : Page
             ButtonMappingScroll.Visibility = Visibility.Collapsed;
             ButtonMappingEmpty.Visibility = Visibility.Visible;
             ButtonMappingEmpty.Text = "当前设备未提供板载按键配置；性能设置仍可用。";
-            ButtonMappingHint.Text = "不猜测设备能力，也不显示空白按键行。";
+            ButtonMappingHint.Text = "";
         }
         else if (count == 0)
         {
@@ -389,6 +391,19 @@ public sealed partial class MousePage : Page
 
             combo.IsEnabled = writable;
         }
+    }
+
+    private void Workspace_Changed(object sender, RoutedEventArgs e)
+    {
+        if (PerformanceCard is null || MappingPanel is null || BoardPanel is null ||
+            sender is not RadioButton { Tag: string workspace })
+        {
+            return;
+        }
+
+        PerformanceCard.Visibility = workspace == "dpi" ? Visibility.Visible : Visibility.Collapsed;
+        MappingPanel.Visibility = workspace == "buttons" ? Visibility.Visible : Visibility.Collapsed;
+        BoardPanel.Visibility = workspace == "board" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void DeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

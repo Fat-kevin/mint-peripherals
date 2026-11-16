@@ -3,7 +3,6 @@ using DeviceCenterPreview.App.Services;
 using DeviceCenterPreview.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace DeviceCenterPreview.App.Views;
@@ -50,9 +49,9 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
     private void Refresh()
     {
         var headset = App.PeripheralService.GetSnapshot(DeviceKind.Headset);
-        HeadsetName.Text = headset.DisplayName;
+        HeadsetName.Text = headset.IsConnected ? headset.DisplayName : "耳机";
         SetStatus(HeadsetStatusChip, headset.IsConnected);
-        UpdateRing(HeadsetRing, headset.BatteryPercent, headset.Charging, "AppHeadsetBrush");
+        HeadsetBattery.Text = FormatPercent(headset.BatteryPercent, headset.Charging);
         HeadsetDetail.Text = headset.Components.Count > 0
             ? string.Join(" · ", headset.Components.Select(c => $"{c.Label} {FormatPercent(c.Percent)}"))
             : headset.ControlHint ?? headset.StatusText;
@@ -76,36 +75,24 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
 
         HubMouseImage.Visibility = mouseArtwork is not null ? Visibility.Visible : Visibility.Collapsed;
         HubMouseIcon.Visibility = mouseArtwork is not null ? Visibility.Collapsed : Visibility.Visible;
-        MouseName.Text = mouse.DisplayName;
+        MouseName.Text = mouse.IsConnected ? mouse.DisplayName : "鼠标";
         SetStatus(MouseStatusChip, mouse.IsConnected);
-        UpdateRing(MouseRing, mouse.BatteryPercent, mouse.Charging, "AppMouseBrush");
+        MouseBattery.Text = FormatPercent(mouse.BatteryPercent, mouse.Charging);
         var mouseMeta = mouse.StatusText.Replace("已连接", "").Trim(' ', '·');
         MouseDetail.Text = mouse.ControlsAvailable
             ? (string.IsNullOrWhiteSpace(mouseMeta) ? "控制通道已接入" : $"{mouseMeta} · 控制通道已接入")
             : mouse.ControlHint ?? mouse.StatusText;
 
         var remote = App.PeripheralService.GetSnapshot(DeviceKind.Remote);
-        RemoteName.Text = remote.DisplayName;
+        RemoteName.Text = remote.IsConnected ? remote.DisplayName : "遥控器";
         SetStatus(RemoteStatusChip, remote.IsConnected);
-        UpdateRing(RemoteRing, remote.BatteryPercent, remote.Charging, "AppRemoteBrush");
+        RemoteBattery.Text = FormatPercent(remote.BatteryPercent, remote.Charging);
+        var connected = (headset.IsConnected ? 1 : 0) + (mouse.IsConnected ? 1 : 0) + (remote.IsConnected ? 1 : 0);
+        ConnectionSummary.Text = $"已连接 {connected} 台设备";
         var remoteMeta = remote.StatusText.Replace("已连接", "").Trim(' ', '·');
         RemoteDetail.Text = remote.ControlsAvailable
             ? (string.IsNullOrWhiteSpace(remoteMeta) ? "语音与按键通道已接入" : $"{remoteMeta} · 语音与按键通道已接入")
             : remote.ControlHint ?? remote.StatusText;
-    }
-
-    private void UpdateRing(BatteryRing ring, int? percent, ChargingState charging, string deviceBrushKey)
-    {
-        var value = percent ?? 0;
-        ring.BatteryValue = value;
-        ring.Charging = charging == ChargingState.Charging;
-        // Use status color for the ring, not device color — it conveys charge level.
-        ring.RingBrush = value switch
-        {
-            <= 15 => ResourceBrush("AppDangerBrush"),
-            <= 35 => ResourceBrush("AppWarningBrush"),
-            _ => ResourceBrush(deviceBrushKey),
-        };
     }
 
     private static void SetStatus(StatusChip chip, bool connected)
@@ -114,11 +101,17 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         chip.Text = connected ? "已连接" : "离线";
     }
 
-    private Brush ResourceBrush(string key) => AppTheme.GetBrush(this, key);
-
     public void OnAppThemeChanged() => Refresh();
 
-    private static string FormatPercent(int? percent) => percent is null ? "—" : $"{percent}%";
+    private static string FormatPercent(int? percent, ChargingState charging = ChargingState.Unknown)
+    {
+        if (percent is null)
+        {
+            return "—";
+        }
+
+        return charging == ChargingState.Charging ? $"{percent}% · 充电中" : $"{percent}%";
+    }
 
     private void HeadsetCard_Click(object sender, RoutedEventArgs e) => Navigate(typeof(HeadsetPage));
 
@@ -137,8 +130,6 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
             AppLog.Warn("mouse refresh from hub failed: " + ex.Message);
         }
     }
-
-    private void OpenSettings_Click(object sender, RoutedEventArgs e) => Navigate(typeof(SettingsPage));
 
     private void Navigate(Type pageType)
     {

@@ -653,3 +653,7 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
   - notify / 初始读 / 本轮活动读都会更新“上次读取”，避免连续按键重复查询。
 - 决策抽成纯函数 `battery::activity_should_refresh`，新增单测；本机 `cargo test -p sayall-windows --lib battery` 8/8 通过。
 - Release sidecar 重新构建并替换到已安装 1.0.7 的 `sidecars\`（原始文件备份 `sayall-engine.exe.bak-1.0.7`），应用重启后遥控器正常连接。
+
+## 2026-11-16 实体设备工作区
+
+总览采用共享设备陈列，耳机采用直接选模式，鼠标分隔三项任务并保留写入区，遥控器默认进入可选实体键与手势检查器，设置按任务分区。交互、主题和稳定性约束见 [UI 设计系统](../ui/design-system.md)。

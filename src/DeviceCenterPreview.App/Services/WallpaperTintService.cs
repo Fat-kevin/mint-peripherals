@@ -12,8 +12,8 @@ namespace DeviceCenterPreview.App.Services;
 public static class WallpaperTintService
 {
     // 与 Styles/Tokens.Color.xaml 的 AppCanvasBrush 基准色保持同步。
-    public static readonly Color CanvasLight = Color.FromArgb(0xFF, 0xF5, 0xF8, 0xF6);
-    public static readonly Color CanvasDark = Color.FromArgb(0xFF, 0x10, 0x16, 0x13);
+    public static readonly Color CanvasLight = Color.FromArgb(0xFF, 0xF0, 0xF2, 0xEC);
+    public static readonly Color CanvasDark = Color.FromArgb(0xFF, 0x16, 0x1C, 0x1B);
 
     // 混入比例：深色画布更暗，稍高一点才可见；都足够小，不可能破坏对比度。
     public const double CanvasRatioLight = 0.07;
