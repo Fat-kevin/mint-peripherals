@@ -58,6 +58,10 @@ public sealed class UnavailablePeripheralService(string reason) : IPeripheralSer
 
     public RemoteControls GetRemoteControls() => new("", false, false, []);
 
+    public void RestartRemoteEngine()
+    {
+    }
+
     public void UpdateRemoteControls(RemoteControls controls)
     {
     }

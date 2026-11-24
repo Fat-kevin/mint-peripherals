@@ -130,6 +130,7 @@ public sealed partial class RemotePage : Page, IThemeAware
     private CancellationTokenSource? _fullKeyRetryCts;
     private bool _loadedRemote;
     private bool _receiving;
+    private bool _channelBound;
     private int _voiceReceiveCount;
     private bool _lastVoiceStreaming;
     private List<RemoteDeviceInfo> _scanDevices = [];
@@ -248,6 +249,34 @@ public sealed partial class RemotePage : Page, IThemeAware
             UpdateVoiceReceiveText();
         }
         _lastVoiceStreaming = voiceStreaming;
+        // 按键通道：BLE 连接正常但 Windows HOGP/HID 接口掉绑时，按键与接收测试都会失效。
+        var channelBound = controls.EngineConnected && snapshot.IsConnected && controls.ListenerActive;
+        _channelBound = channelBound;
+        InputChannelText.Text = !controls.EngineConnected
+            ? "引擎未连接"
+            : !snapshot.IsConnected
+                ? "设备未连接"
+                : controls.ListenerActive
+                    ? "就绪"
+                    : "未绑定";
+        InputChannelDot.Fill = ResourceBrush(channelBound
+            ? "AppSuccessBrush"
+            : controls.EngineConnected && snapshot.IsConnected
+                ? "AppWarningBrush"
+                : "AppOfflineBrush");
+        InputChannelText.Foreground = ResourceBrush(channelBound
+            ? "AppTextPrimaryBrush"
+            : controls.EngineConnected && snapshot.IsConnected
+                ? "AppWarningBrush"
+                : "AppTextSecondaryBrush");
+        FixInputButton.Visibility = controls.EngineConnected && snapshot.IsConnected && !controls.ListenerActive
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        ToolTipService.SetToolTip(InputChannelText,
+            $"HID 相位：{(string.IsNullOrWhiteSpace(controls.RawInputPhase) ? "未知" : controls.RawInputPhase)}" +
+            $" · 匹配设备：{controls.MatchedDeviceCount}" +
+            $" · 原始事件：{controls.RawEventCount} · 语义边沿：{controls.SemanticEdgeCount}");
+
         RemoteErrorText.Text = controls.Error ?? "";
         RemoteErrorText.Visibility = string.IsNullOrWhiteSpace(controls.Error)
             ? Visibility.Collapsed
@@ -1119,6 +1148,15 @@ public sealed partial class RemotePage : Page, IThemeAware
         });
     }
 
+    private void FixInput_Click(object sender, RoutedEventArgs e)
+    {
+        App.PeripheralService.RestartRemoteEngine();
+        InputChannelText.Text = "重启中…";
+        FixInputButton.Visibility = Visibility.Collapsed;
+        ReceiveStatus.Text = "已请求重启遥控器引擎；约 5–10 秒后按键通道会重新绑定，可再点接收测试确认。";
+        SaveStatus.Text = "正在重启遥控器引擎（应用不会退出）。";
+    }
+
     private async void ReceiveTest_Click(object sender, RoutedEventArgs e)
     {
         if (_receiving)
@@ -1130,6 +1168,13 @@ public sealed partial class RemotePage : Page, IThemeAware
         if (!_engineConnected)
         {
             ReceiveStatus.Text = "遥控器引擎未连接，无法测试。";
+            return;
+        }
+
+        if (!_channelBound)
+        {
+            ReceiveStatus.Text = "按键通道未绑定：先点右侧「修复」重启引擎，就绪后再测试。";
+            SaveStatus.Text = "接收测试需要 Windows HID 接口就绪；已阻止本次测试。";
             return;
         }
 

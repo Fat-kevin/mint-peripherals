@@ -67,5 +67,8 @@ public interface IPeripheralService
 
     Task<RemoteFullKeyStatus> GetRemoteFullKeyStatusAsync();
 
+    /// <summary>重启遥控器引擎（按键通道掉绑后的自愈入口；未实现方为 no-op）。</summary>
+    void RestartRemoteEngine();
+
     Task FindHeadsetAsync(bool enabled);
 }

@@ -707,3 +707,18 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
 - 验证：Core 测试 11/11 通过；从 `publish/app` 启动发布版，首页与版本号 v1.1.0 正常。
 - 升级方式：无需卸载旧版，直接运行新安装包覆盖安装；设置、遥控器映射、备份目录保留。
 - 安装器会用 AppMutex + taskkill 结束运行中的实例与 Helper 任务，再替换文件并重新注册计划任务。
+
+## 2026-11-24 遥控器按键通道掉绑修复 + 自愈（1.1.1）
+
+- 现场：应用显示遥控器已连接（BLE/GATT 正常、电量 54%），但按键全部无效、接收测试 0 个按键。
+- 根因：Windows HOGP/HID 接口丢失，raw input 监听器 `listenerActive=false`、
+  `phase=Awaiting, matched_device_count=0`；`gate_active=true` 使 UI 看起来正常。
+  代码注释记录过该失效模式（2026-09-18）。重启应用/引擎后 Windows 重新枚举 HID 键盘接口即恢复。
+- 修复：
+  - `RealPeripheralService` 增加 5 秒看门狗：引擎 ready 且已连接、语音会话空闲、
+    监听器持续未绑定 ≥20 秒时自动重启遥控器引擎；每次连接最多 3 次、间隔 ≥90 秒，恢复后计数清零。
+  - `IPeripheralService.RestartRemoteEngine()` 暴露为契约（Mock/Unavailable 为 no-op）。
+  - 遥控器页工具栏新增「按键通道 · 就绪/未绑定」+「修复」按钮（手动重启引擎）；
+    未绑定时阻止接收测试并提示原因；tooltip 显示 HID 相位/匹配设备/事件计数。
+- 验证：x64 Debug 构建 0 警告 0 错误；Debug 实机运行确认通道就绪、看门狗无误触发；
+  Release 自包含发布 + Inno Setup 编译 1.1.1 安装包。

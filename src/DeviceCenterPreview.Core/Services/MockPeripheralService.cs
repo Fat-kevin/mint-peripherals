@@ -169,6 +169,10 @@ public sealed class MockPeripheralService : IPeripheralService
         return controls;
     }
 
+    public void RestartRemoteEngine()
+    {
+    }
+
     public void UpdateRemoteControls(RemoteControls controls)
     {
         _remoteControls[controls.DeviceId] = controls;

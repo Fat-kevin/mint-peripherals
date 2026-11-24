@@ -33,6 +33,11 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
     private readonly RemoteEngineClient _remote;
     private RealHeadsetController? _headsetController;
     private readonly Timer _timer;
+    private readonly Timer _remoteHealTimer;
+    private readonly object _remoteHealGate = new();
+    private DateTimeOffset? _remoteListenerLostAt;
+    private DateTimeOffset _remoteLastRestartAt = DateTimeOffset.MinValue;
+    private int _remoteHealAttempts;
     private AppSettings _settings;
 
     // 隔离开关：额外 WinRT 蓝牙枚举和耳机 SPP 控制器会与 DeviceManager 争用 COM/WinRT 对象；
@@ -96,6 +101,11 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
         }
 
         _timer = new Timer(_ => _ = RefreshAsync(), null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+        // 按键通道看门狗：BLE 已连接、引擎 ready，但 Windows HOGP/HID 接口丢失时，
+        // raw input 监听器会停在未绑定（ListenerActive=false），按键与接收测试全部失效。
+        // 此时重启遥控器引擎可让 Windows 重新枚举 HOGP 链路（2026-11-24 现场验证有效）。
+        _remoteHealTimer = new Timer(_ => CheckRemoteListenerHealth(), null,
+            TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         AppLog.Info("real peripheral service started");
     }
 
@@ -160,10 +170,95 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
 
     public void RestartRemoteEngine()
     {
+        lock (_remoteHealGate)
+        {
+            _remoteListenerLostAt = null;
+        }
+
+        AppLog.Info("remote engine restart requested");
         _remote.Stop();
         if (_settings.RemoteModuleEnabled)
         {
             _remote.Start();
+        }
+    }
+
+    /// <summary>
+    /// 遥控器按键通道看门狗（5 秒一次）。触发条件：引擎 ready、设备已连接、
+    /// 语音会话空闲，且 raw input 监听器持续未绑定 ≥20 秒。每次最多自动重启 3 次，
+    /// 两次之间 ≥90 秒；监听器真正恢复后计数清零，避免正常重连抖动引发反复重启。
+    /// </summary>
+    private void CheckRemoteListenerHealth()
+    {
+        try
+        {
+            if (_disposed || !_settings.RemoteModuleEnabled)
+            {
+                ResetRemoteHealCounters();
+                return;
+            }
+
+            var state = _remote.State;
+            if (state.ListenerActive)
+            {
+                ResetRemoteHealCounters();
+                return;
+            }
+
+            // 未连接 / 引擎还在 reconnecting·discovering / 语音会话进行中：都先不动。
+            if (!state.Connected || state.Phase != "ready" ||
+                state.VoiceState is "streaming" or "draining")
+            {
+                lock (_remoteHealGate)
+                {
+                    _remoteListenerLostAt = null;
+                }
+
+                return;
+            }
+
+            var now = DateTimeOffset.Now;
+            int attempt;
+            double lostSeconds;
+            lock (_remoteHealGate)
+            {
+                _remoteListenerLostAt ??= now;
+                lostSeconds = (now - _remoteListenerLostAt.Value).TotalSeconds;
+                if (lostSeconds < 20 || _remoteHealAttempts >= 3 ||
+                    now - _remoteLastRestartAt < TimeSpan.FromSeconds(90))
+                {
+                    return;
+                }
+
+                _remoteHealAttempts++;
+                attempt = _remoteHealAttempts;
+                _remoteLastRestartAt = now;
+                _remoteListenerLostAt = null;
+            }
+
+            AppLog.Warn(
+                $"remote listener unbound for {lostSeconds:F0}s " +
+                $"(phase={state.RawInputPhase}, matched={state.MatchedDeviceCount}); " +
+                $"restarting engine to rebind HOGP, attempt {attempt}/3");
+            RestartRemoteEngine();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("remote listener watchdog failed: " + ex.Message);
+        }
+    }
+
+    private void ResetRemoteHealCounters()
+    {
+        lock (_remoteHealGate)
+        {
+            _remoteListenerLostAt = null;
+            if (_remoteHealAttempts > 0)
+            {
+                AppLog.Info("remote listener channel recovered; heal counter reset");
+            }
+
+            _remoteHealAttempts = 0;
         }
     }
 
@@ -1153,6 +1248,7 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
 
         _disposed = true;
         _timer.Dispose();
+        _remoteHealTimer.Dispose();
         _headsetController?.Dispose();
         _mouse.Dispose();
         _remote.Dispose();

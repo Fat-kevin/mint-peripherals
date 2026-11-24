@@ -39,8 +39,8 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Spacing="4">
@@ -64,7 +64,25 @@
                 </StackPanel>
                 <TextBlock x:Name="ScanStatus" Grid.Column="2" Text="尚未扫描"
                            Style="{StaticResource BenchFootnoteStyle}"
+                           TextTrimming="CharacterEllipsis"
                            VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                <StackPanel Grid.Column="3" Spacing="4" VerticalAlignment="Bottom"
+                            Margin="0,0,14,4">
+                    <TextBlock Text="按键通道" Style="{StaticResource BenchLabelStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse x:Name="InputChannelDot" Width="6" Height="6"
+                                 VerticalAlignment="Center"
+                                 Fill="{ThemeResource AppOfflineBrush}" />
+                        <TextBlock x:Name="InputChannelText" Text="—"
+                                   VerticalAlignment="Center"
+                                   Style="{StaticResource BenchValueStyle}" />
+                        <Button x:Name="FixInputButton" Content="修复"
+                                Style="{StaticResource BenchGhostButtonStyle}"
+                                MinHeight="24" Padding="8,0"
+                                Visibility="Collapsed"
+                                Click="FixInput_Click" />
+                    </StackPanel>
+                </StackPanel>
                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="10"
                             VerticalAlignment="Bottom" Margin="0,0,0,4">
                     <controls:BatteryRing x:Name="RemoteRing" Size="40"

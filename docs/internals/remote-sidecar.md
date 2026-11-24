@@ -69,6 +69,22 @@
 8. 每 1 秒发 snapshot；每 30 秒复查一次 Helper（已连接则跳过，断连则重新 `/run` 计划任务）；
    退出时 `shutdown_ble_for_exit` + `key_host::shutdown_global`。
 
+## 按键通道掉绑与自愈（2026-11-24）
+
+- 现象：UI 显示遥控器已连接（引擎 BLE/GATT 正常、电量正常），但所有按键无反应、接收测试 0 个按键。
+- 根因：Windows 侧 HOGP/HID 接口丢失（睡眠唤醒、断连或蓝牙栈抖动后常见）。raw input
+  监听器绑定的是该接口，接口消失后 `mappings.listenerActive=false`，日志里 raw input
+  `phase=Awaiting, matched_device_count=0`；`gate_active` 仍为 true，所以“看起来一切正常”。
+- 判定：引擎 ready 且设备已连接，但 `listenerActive=false` 持续 ≥20 秒。
+- 自愈（`RealPeripheralService.CheckRemoteListenerHealth`，5 秒看门狗）：
+  - 仅在语音会话空闲（非 streaming/draining）时动作；
+  - 自动重启一次遥控器引擎（`RestartRemoteEngine`），让 Windows 重新枚举 HOGP 链路；
+  - 每次连接最多自动重启 3 次、间隔 ≥90 秒；监听器恢复后计数清零，避免重连抖动导致重启循环。
+- UI：遥控器页工具栏常驻「按键通道 · 就绪/未绑定」；未绑定时显示「修复」按钮（手动重启引擎），
+  且接收测试会直接阻止并提示先修复，避免误导性的“测试结束：收到 0 个按键”。
+- 日志：`remote listener unbound for …s … restarting engine … attempt n/3`；
+  恢复后 `remote listener channel recovered; heal counter reset`。
+
 ## 映射保存的坑
 
 `ButtonMappings` 要求每个按键同时有 `single/double/long` 三个槽位。
