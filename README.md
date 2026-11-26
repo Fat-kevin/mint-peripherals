@@ -39,21 +39,21 @@
 
 | 设备中心 · 总览 | 鼠标 · HID++ |
 |:---:|:---:|
-| ![设备中心](docs/screenshots/hub.png) | ![鼠标页](docs/screenshots/mouse.png) |
+| ![设备中心](docs/screenshots/hub-1.2.2.png) | ![鼠标页](docs/screenshots/mouse-1.2.2.png) |
 
 | 耳机 · SPP（双耳独立电量） | 遥控器 · rc003 |
 |:---:|:---:|
-| ![耳机页](docs/screenshots/headset.png) | ![遥控器页](docs/screenshots/remote.png) |
+| ![耳机页](docs/screenshots/headset-1.2.2.png) | ![遥控器页](docs/screenshots/remote-1.2.2.png) |
 
 | 设置 · 外观与授权 | 深色 + 壁纸染色 |
 |:---:|:---:|
-| ![设置页](docs/screenshots/settings.png) | ![深色主题](docs/screenshots/dark.png) |
+| ![设置页](docs/screenshots/settings-1.2.2.png) | ![深色主题](docs/screenshots/dark-1.2.2.png) |
 
 ## 📊 任务栏显示
 
 把电量直接放上任务栏，不必常开主窗口：
 
-![任务栏内嵌电量条](docs/screenshots/taskbar.png)
+![任务栏内嵌电量条](docs/screenshots/taskbar-1.2.2.png)
 
 - **形态**：透明内嵌 `图标 + 百分比`，无胶囊底板；跟随任务栏明暗主题、DPI 缩放，Win10 图标自动回退 Segoe MDL2；
 - **内容**：耳机（可分左右耳）、鼠标、遥控器，以及可选的键盘 / 手柄 / 音箱等通用设备；最多 6 项，溢出显示 `+N`；
@@ -63,7 +63,7 @@
 
 | 设置 · 任务栏显示 |
 |:---:|
-| ![任务栏设置](docs/screenshots/taskbar-settings.png) |
+| ![任务栏设置](docs/screenshots/taskbar-settings-1.2.2.png) |
 
 > 任务栏显示形态参考了开源项目 BatteryHub；本项目为 clean-room 实现，只吸收行为与协议事实，未复制其 GPL-3.0 代码。调研记录见 [BatteryHub 调研与设计](docs/investigations/2026-11-27-batteryhub-design.md)。
 
