@@ -26,6 +26,10 @@ fn main() {
 
     let platform = WindowsPlatform::default();
     let state_dir = state_dir();
+    // 初始化「微信输入法音频证据」能力记忆（按输入法版本绑定；缺失/损坏按不可靠处理）。
+    sayall_windows::initialize_voice_audio_capability(
+        state_dir.join("voice-audio-capability.json"),
+    );
     let selected_remote_id = apply_saved_settings(&platform, &state_dir);
     // 计划任务没有登录/开机触发器，必须由宿主按需 `/run`；否则重启后
     // Helper 不会自己出现，音量键/返回键会再次“映射没反应”。

@@ -722,3 +722,36 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
     未绑定时阻止接收测试并提示原因；tooltip 显示 HID 相位/匹配设备/事件计数。
 - 验证：x64 Debug 构建 0 警告 0 错误；Debug 实机运行确认通道就绪、看门狗无误触发；
   Release 自包含发布 + Inno Setup 编译 1.1.1 安装包。
+
+## 2026-11-26 微信输入法「按住说话」被自动恢复截断：根因定位与方案设计
+
+- 现象：遥控器语音键按住说话，1–3 秒后输入法自己结束；应用显示遥控器已连接、电量正常，
+  接收测试与 ATVV 音频链路均正常。
+- 取证：以 `SAYALL_GATT_LOG` 启动 sidecar，复现一次按住说话。时序显示
+  0.7s 判定 `wetype_check reacted=false reviving`、约 2.9s 执行 `chord_retry`（释放并重按
+  Ctrl+Win），把进行中的听写拆掉；`voice_verify mic=not_observed`、WTYP 标记计数始终为 0，
+  同时 F5 抑制器日志正常（排除钩子未安装）。
+- 根因：微信输入法 3.0.3.11 上两个存活判据同时失效（ConsentStore 自 2.1.4.6 起不写、
+  WTYP 0xFC 标记本版本不发），sidecar 把「检测不到」误判成「未响应」，执行了为旧版
+  「热键钩子休眠」准备的破坏性恢复阶梯。
+- 方案（后续调研与实施见 `docs/investigations/2026-11-26-wechat-voice-cutoff-report.md`）：
+  证据可信度 + 能力记忆（按工具 + 微信输入法版本持久化 marker/mic 能力位）；
+  破坏性恢复仅在可靠证据判定 `NotReacted` 时执行，判据不可靠一律 `Unknown` 不动作；
+  老版本微信保留自动恢复，3.x 不再误伤。P1 持久化能力位与版本重置；P2 可选 UI 提示/设置开关。
+- 状态：方案待实施（目标 1.1.2），未改 sidecar 代码。
+
+## 2026-11-26 微信输入法「按住说话」截断修复（1.1.2，音频采集会话语义）
+
+- 根因：sidecar 的微信输入法热键休眠自动恢复在判据失明时误判未响应，于约 0.7s 切换
+  输入法配置、约 2.9s 释放/重按 Ctrl+Win，把进行中的听写拆掉；两个旧判据在微信输入法
+  3.0.3.11 上均失效（ConsentStore 自 2.1.4.6 起不写、WTYP 0xFC 标记不发）。
+- 调研：真机探针（`examples/voice_session_probe.rs`）验证 Windows 音频会话层可直接观测
+  WeType 采集会话（CABLE Output，153–779ms 变 Active，枚举 6–10ms/次，标识含
+  `Tencent\WeType` 可归因）。报告与实施文档见 `docs/investigations/2026-11-26-*`。
+- 实现：新增 `voice_wetype_audio` 模块（采集会话枚举/归因/版本探测/能力持久化）；
+  `spawn_wetype_check` 改为 150ms 轮询、最多等待 1500ms 的音频证据，`merge_verdict`
+  决定 Reacted/NotReacted/Unknown；仅 `NotReacted` 进入原恢复阶梯；`RetryVoiceChord`
+  释放前二次确认音频，迟到启动/枚举失败一律跳过。能力文件
+  `%APPDATA%\app.getsayall.remote-mic.windows\voice-audio-capability.json` 按输入法版本绑定。
+- 验证：sayall-windows 358 项测试通过（11 ignored）、sayall-core 测试通过；Debug 实机启动
+  日志 `voice_audio capability_loaded version=3.0.3.11`；Release 自包含发布 + Inno 1.1.2 安装包。

@@ -23,6 +23,8 @@
 | L3 | [`internals/logitech-hidpp.md`](internals/logitech-hidpp.md) | 调 HID++ 特征、板载配置 |
 | L3 | [`internals/remote-sidecar.md`](internals/remote-sidecar.md) | 改 sidecar 命令/事件/生命周期 |
 | L3 | [`internals/mapping-storage.md`](internals/mapping-storage.md) | 改映射 JSON、配置持久化 |
+| L3 | [`investigations/2026-11-26-wechat-voice-cutoff-report.md`](investigations/2026-11-26-wechat-voice-cutoff-report.md) | 微信输入法语音被截断：调研报告与方案对比 |
+| L3 | [`investigations/2026-11-26-wechat-voice-cutoff-implementation.md`](investigations/2026-11-26-wechat-voice-cutoff-implementation.md) | 上述问题的实施文档（1.1.2） |
 | L4 | [`stability/crash-history.md`](stability/crash-history.md) | 出现黑屏/闪退/卡死，或要改窗口/弹层 |
 | L4 | [`decisions.md`](decisions.md) | 想知道“为什么固定窗口/为什么不用 WebView2” |
 | L4 | [`history/implementation-log.md`](history/implementation-log.md) | 想知道到目前为止做过什么、下一步 |

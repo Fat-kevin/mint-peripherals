@@ -118,6 +118,11 @@ pub mod tray_icons;
 pub mod vokie;
 #[cfg(windows)]
 mod wetype_revive;
+/// 微信输入法语音的「直接证据」：Windows 音频采集会话（2026-11-26）。
+#[cfg(windows)]
+mod voice_wetype_audio;
+#[cfg(windows)]
+pub use voice_wetype_audio::initialize_voice_audio_capability;
 // 录入会话的微信输入法麦克风观测（模块本体私有，仅导出这两个读数入口）。
 #[cfg(windows)]
 pub use wetype_revive::{capture_mic_baseline, capture_mic_verdict};

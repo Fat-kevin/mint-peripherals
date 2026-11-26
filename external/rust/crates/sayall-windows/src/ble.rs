@@ -1006,7 +1006,30 @@ fn worker_loop(
                     gatt_note(format!("chord_retry skipped reason=stale epoch={epoch}"));
                     continue;
                 }
+                // 音频证据二次确认：迟到启动的采集会话绝不能被重按拆掉。
+                let capture = crate::voice_wetype_audio::wechat_capture_state();
+                if capture.active {
+                    crate::voice_wetype_audio::note_wechat_audio_observed();
+                    gatt_note(format!(
+                        "chord_retry skipped reason=audio_reacted attempt={attempt} epoch={epoch} endpoint='{}' pid={}",
+                        capture.endpoint.as_deref().unwrap_or(""),
+                        capture.pid.unwrap_or(0)
+                    ));
+                    continue;
+                }
+                if !capture.available && crate::voice_wetype_audio::wechat_audio_reliable() {
+                    gatt_note(format!(
+                        "chord_retry skipped reason=audio_unavailable attempt={attempt} epoch={epoch}"
+                    ));
+                    continue;
+                }
                 let (verdict, evidence, mic) = wetype_reaction(baseline, marker_baseline);
+                let verdict = crate::voice_wetype_audio::merge_verdict(
+                    verdict,
+                    capture.active,
+                    capture.available,
+                    crate::voice_wetype_audio::wechat_audio_reliable(),
+                );
                 if verdict != WetypeReaction::NotReacted {
                     gatt_note(format!(
                         "chord_retry skipped reason={} evidence={evidence} mic={} attempt={attempt} epoch={epoch}",
@@ -3393,8 +3416,8 @@ fn format_utc_timestamp(duration: std::time::Duration) -> String {
 /// - 实证：WeType 可能"TSF 激活但热键钩子休眠"（LWin 穿透、无 0xFC、
 ///   不开麦），打开其设置页立即复活；跨进程解除节流不可行
 ///   （SetProcessInformation 对其他进程 E_INVALIDARG，15:04 真机）。
-/// - 检测：和弦注入后 ~700ms 读 ConsentStore 开麦时间戳验证 WeType 真的
-///   响应了本次语音（公开可观测判据）。
+/// - 检测：和弦注入后以 150ms 间隔轮询「WeType 音频采集会话」（Windows 公开
+///   音频会话 API；2026-11-26 真机验证），辅以 ConsentStore 与 WTYP 标记。
 /// - 恢复（重试阶梯，全部基于 2026-09-05 16:44-17:35 七次真实休眠发作
 ///   的 kb-live.log/ConsentStore 持锁解码实测，非推测常量）：
 ///   - 配置切换（ime::cycle_wetype_profile，公开 API）确实能复活钩子；
@@ -3407,7 +3430,10 @@ fn format_utc_timestamp(duration: std::time::Duration) -> String {
 ///     下一轮检测；两轮重试都未响应才提示人工（打开微信输入法界面）。
 /// 全程落 gatt_note 日志（含 attempt 轮次）；检测线程尽力而为，绝不
 /// 阻塞语音会话。
-const WETYPE_CHECK_DELAY_MS: u64 = 700;
+const WETYPE_CHECK_DELAY_MS: u64 = 150;
+/// 等待音频采集证据的最长时间（真机实测 WeType 采集会话 153–779ms 变 Active；
+/// 超过该窗口仍无采集会话，才允许在「能力可靠」前提下进入恢复阶梯）。
+const REACTION_GRACE_MS: u64 = 1500;
 /// 每轮重注入距上一轮 cycle 完成的等待。实测依据（2026-09-05 20:15-20:27
 /// 七次发作 + 16:44-17:35 七次，sayall-diag.log/kb-live 解码）：复活延迟
 /// 分布 1.4/1.45/2.24/3.2/3.4/5.3/>10.4s——[2,3] 两轮只覆盖前三种且实测
@@ -3460,51 +3486,105 @@ fn spawn_wetype_check(
     let state = Arc::clone(state);
     let epoch_ref = Arc::clone(epoch_ref);
     gatt_note(format!(
-        "wetype_check armed attempt={attempt} epoch={epoch} baseline_available={} marker_baseline={marker_baseline}",
-        baseline.is_some()
+        "wetype_check armed attempt={attempt} epoch={epoch} baseline_available={} marker_baseline={marker_baseline} audio_reliable={}",
+        baseline.is_some(),
+        crate::voice_wetype_audio::wechat_audio_reliable()
     ));
     std::thread::Builder::new()
         .name("sayall-wetype-check".to_owned())
         .spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(WETYPE_CHECK_DELAY_MS));
-            let (still_streaming, same_session) = {
-                let snapshot = lock(&state);
-                (
-                    snapshot.voice_state == VoiceSessionState::Streaming,
-                    epoch_ref.load(Ordering::SeqCst) == epoch,
-                )
-            };
-            if !still_streaming || !same_session {
-                // 会话已结束或已被新会话替换：无需验证/唤醒（避免误判与
-                // 误伤——旧阶梯释放/重按新会话的和弦会打断其听写）。
-                gatt_note(if same_session {
-                    "wetype_check skipped reason=session_ended".to_owned()
-                } else {
-                    format!("wetype_check skipped reason=session_replaced epoch={epoch}")
-                });
-                return;
-            }
-            match wetype_reaction(baseline, marker_baseline) {
-                (WetypeReaction::Reacted, evidence, mic) => {
-                    // marker_extra 是目标程序自定义的魔数（WeType = "WTYP"），
-                    // 只用于真机归因，不含用户数据。mic= 记录开麦判据自身结果，
-                    // 用于区分"盲判"与"两条通道同时命中"。
+            let started = Instant::now();
+            // 主判据：微信输入法是否真的在采集音频（Windows 音频会话，公开 API）。
+            // 看到 WeType 采集会话 = 本次听写已生效，立即返回，绝不执行任何恢复。
+            loop {
+                std::thread::sleep(Duration::from_millis(WETYPE_CHECK_DELAY_MS));
+                let (still_streaming, same_session) = {
+                    let snapshot = lock(&state);
+                    (
+                        snapshot.voice_state == VoiceSessionState::Streaming,
+                        epoch_ref.load(Ordering::SeqCst) == epoch,
+                    )
+                };
+                if !still_streaming || !same_session {
+                    // 会话已结束或已被新会话替换：无需验证/唤醒（避免误判与
+                    // 误伤——旧阶梯释放/重按新会话的和弦会打断其听写）。
+                    gatt_note(if same_session {
+                        "wetype_check skipped reason=session_ended".to_owned()
+                    } else {
+                        format!("wetype_check skipped reason=session_replaced epoch={epoch}")
+                    });
+                    return;
+                }
+                let capture = crate::voice_wetype_audio::wechat_capture_state();
+                if capture.active {
+                    crate::voice_wetype_audio::note_wechat_audio_observed();
                     gatt_note(format!(
-                        "wetype_check reacted=true attempt={attempt} epoch={epoch} evidence={evidence} mic={} marker_extra={:#X}",
-                        mic.as_log_str(),
-                        crate::key_suppressor::wetype_marker_last_extra()
+                        "voice_audio result=reacted latency_ms={} attempt={attempt} epoch={epoch} endpoint='{}' pid={}",
+                        started.elapsed().as_millis(),
+                        capture.endpoint.as_deref().unwrap_or(""),
+                        capture.pid.unwrap_or(0)
                     ));
                     return;
                 }
-                (WetypeReaction::Unknown, _, mic) => {
+                // WTYP 标记（老版本微信）是正面证据：出现即代表输入法已消费和弦。
+                if crate::key_suppressor::wetype_marker_count() > marker_baseline {
                     gatt_note(format!(
-                        "wetype_check skipped reason=observation_unavailable attempt={attempt} epoch={epoch} mic={}",
+                        "voice_audio result=marker latency_ms={} attempt={attempt} epoch={epoch}",
+                        started.elapsed().as_millis()
+                    ));
+                    return;
+                }
+                if started.elapsed() >= Duration::from_millis(REACTION_GRACE_MS) {
+                    break;
+                }
+            }
+
+            // 宽限期结束：判定前再采样一次，迟到的采集会话绝不能被误判为缺席。
+            let capture = crate::voice_wetype_audio::wechat_capture_state();
+            if capture.active {
+                crate::voice_wetype_audio::note_wechat_audio_observed();
+                gatt_note(format!(
+                    "voice_audio result=reacted latency_ms={} attempt={attempt} epoch={epoch} endpoint='{}' pid={}",
+                    started.elapsed().as_millis(),
+                    capture.endpoint.as_deref().unwrap_or(""),
+                    capture.pid.unwrap_or(0)
+                ));
+                return;
+            }
+
+            // 兜底判据：WTYP 标记 / ConsentStore 开麦（老版本与其它工具路径）。
+            let audio_available = capture.available;
+            let audio_reliable = crate::voice_wetype_audio::wechat_audio_reliable();
+            let (base_verdict, evidence, mic) = wetype_reaction(baseline, marker_baseline);
+            let verdict = crate::voice_wetype_audio::merge_verdict(
+                base_verdict,
+                capture.active,
+                audio_available,
+                audio_reliable,
+            );
+            gatt_note(format!(
+                "wetype_check verdict={verdict:?} base={base_verdict:?} evidence={evidence} mic={} audio={} audio_reliable={audio_reliable} attempt={attempt} epoch={epoch}",
+                mic.as_log_str(),
+                if capture.active {
+                    "active"
+                } else if audio_available {
+                    "absent"
+                } else {
+                    "unavailable"
+                }
+            ));
+            match verdict {
+                WetypeReaction::Reacted => return,
+                WetypeReaction::Unknown => {
+                    gatt_note(format!(
+                        "wetype_check skipped reason=evidence_unavailable action=none attempt={attempt} epoch={epoch} mic={} audio_reliable={audio_reliable}",
                         mic.as_log_str()
                     ));
                     return;
                 }
-                (WetypeReaction::NotReacted, _, _) => {}
+                WetypeReaction::NotReacted => {}
             }
+
             if attempt >= WETYPE_RETRY_MAX_ATTEMPT {
                 // 最后一轮仍未响应：放弃自动恢复，提示人工（唯一兜底）。
                 gatt_note(format!(
@@ -3544,16 +3624,39 @@ fn spawn_wetype_check(
                 });
                 return;
             }
+            // 重试前再确认一次音频证据：等待期间启动的听写不能被重按拆掉。
+            let capture = crate::voice_wetype_audio::wechat_capture_state();
+            if capture.active {
+                crate::voice_wetype_audio::note_wechat_audio_observed();
+                gatt_note(format!(
+                    "voice_audio result=reacted phase=pre_retry latency_ms={} attempt={attempt} epoch={epoch}",
+                    started.elapsed().as_millis()
+                ));
+                return;
+            }
             let (verdict, evidence, mic) = wetype_reaction(baseline, marker_baseline);
+            let verdict = crate::voice_wetype_audio::merge_verdict(
+                verdict,
+                capture.active,
+                capture.available,
+                crate::voice_wetype_audio::wechat_audio_reliable(),
+            );
             if verdict != WetypeReaction::NotReacted {
                 gatt_note(format!(
-                    "wetype_check skipped_retry reason={} evidence={evidence} mic={} attempt={attempt} epoch={epoch}",
+                    "wetype_check skipped_retry reason={} evidence={evidence} mic={} audio={} attempt={attempt} epoch={epoch}",
                     if verdict == WetypeReaction::Reacted {
                         "wetype_alive"
                     } else {
                         "observation_unavailable"
                     },
-                    mic.as_log_str()
+                    mic.as_log_str(),
+                    if capture.active {
+                        "active"
+                    } else if capture.available {
+                        "absent"
+                    } else {
+                        "unavailable"
+                    }
                 ));
                 return;
             }

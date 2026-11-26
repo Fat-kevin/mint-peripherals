@@ -85,6 +85,29 @@
 - 日志：`remote listener unbound for …s … restarting engine … attempt n/3`；
   恢复后 `remote listener channel recovered; heal counter reset`。
 
+## 微信输入法语音恢复：音频采集会话证据（2026-11-26）
+
+- 现象：按住遥控器语音键说 1–3 秒，微信输入法自己结束；BLE/ATVV 音频链路正常。
+- 根因：微信输入法 3.x 上 ConsentStore 开麦时间戳（≥2.1.4.6 不写）与 WTYP 存活标记
+  （3.0.3.11 不发）两个判据同时失明；`wetype_check` 把「检测不到」当成「未响应」，
+  于是 cycle 配置并释放/重按 Ctrl+Win（约 0.7s / 2.9s），把进行中的听写拆掉。
+- 直接证据：微信输入法开始语音时，Windows 音频会话层会出现归属于 WeType 的**采集会话**
+  （CABLE Output；实测 153–779ms 变 Active，枚举 6–10ms/次）。实现见
+  `external/rust/crates/sayall-windows/src/voice_wetype_audio.rs`。
+- 判定（`merge_verdict`）：
+  - 看到 WeType 采集会话 / WTYP 标记前进 / ConsentStore Observed → `Reacted`（禁止恢复）；
+  - 音频枚举完整且本版本能力可靠、宽限期 1500ms 内无采集会话 → `NotReacted`（允许恢复）；
+  - 其它不可靠情况 → `Unknown`（只记日志，不动作）。
+- 能力记忆：`%APPDATA%\app.getsayall.remote-mic.windows\voice-audio-capability.json`
+  （按微信输入法版本绑定，版本变化重置；首次使用先学习，正常语音一次后建立）。
+- 恢复前二次确认：`RetryVoiceChord` 释放旧和弦前再枚举一次音频会话；发现迟到启动的采集
+  会话或枚举失败时跳过重按。恢复阶梯保持「按住内最多 3 轮」。
+- 日志：`voice_audio capability_loaded/learned`、`voice_audio result=reacted|marker`、
+  `wetype_check verdict=... audio=active|absent|unavailable`、
+  `chord_retry skipped reason=audio_reacted|audio_unavailable`。
+- 探针：`external/rust/crates/sayall-windows/examples/voice_session_probe.rs`
+  （只读会话元数据，不读音频内容）。
+
 ## 映射保存的坑
 
 `ButtonMappings` 要求每个按键同时有 `single/double/long` 三个槽位。
