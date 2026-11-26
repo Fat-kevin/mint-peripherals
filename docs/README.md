@@ -16,7 +16,7 @@
 | L2 | [`features/remote.md`](features/remote.md) | 改遥控器页/映射/接收测试 |
 | L2 | [`features/settings.md`](features/settings.md) | 改设置持久化/模块开关/通知/备份/诊断 |
 | L2 | [`features/integration-parity.md`](features/integration-parity.md) | 对三个原项目做功能完整性审计/取舍 |
-| L2 | [`features/taskbar-tray.md`](features/taskbar-tray.md) | 改任务栏胶囊/托盘/全屏隐藏 |
+| L2 | [`features/taskbar-tray.md`](features/taskbar-tray.md) | 改任务栏内嵌条/托盘/全屏隐藏 |
 | L2 | [`ui/design-system.md`](ui/design-system.md) | 改 UI、配色、排版、窗口 |
 | L2 | [`ui/redesign-research.md`](ui/redesign-research.md) | 做视觉改版、选 AI 设计工具/资源、看当前诊断与方向 |
 | L3 | [`internals/headset-spp.md`](internals/headset-spp.md) | 调耳机协议帧、连接失败 |
@@ -25,6 +25,10 @@
 | L3 | [`internals/mapping-storage.md`](internals/mapping-storage.md) | 改映射 JSON、配置持久化 |
 | L3 | [`investigations/2026-11-26-wechat-voice-cutoff-report.md`](investigations/2026-11-26-wechat-voice-cutoff-report.md) | 微信输入法语音被截断：调研报告与方案对比 |
 | L3 | [`investigations/2026-11-26-wechat-voice-cutoff-implementation.md`](investigations/2026-11-26-wechat-voice-cutoff-implementation.md) | 上述问题的实施文档（1.1.2） |
+| L3 | [`investigations/2026-11-27-batteryhub-ui-research.md`](investigations/2026-11-27-batteryhub-ui-research.md) | BatteryHub 任务栏显示/功能调研 |
+| L3 | [`investigations/2026-11-27-batteryhub-device-research.md`](investigations/2026-11-27-batteryhub-device-research.md) | BatteryHub 设备/协议调研 |
+| L3 | [`investigations/2026-11-27-batteryhub-design.md`](investigations/2026-11-27-batteryhub-design.md) | 任务栏内嵌显示 + 设备扩充设计 |
+| L3 | [`investigations/2026-11-27-batteryhub-plan.md`](investigations/2026-11-27-batteryhub-plan.md) | 1.2.0 实施计划 |
 | L4 | [`stability/crash-history.md`](stability/crash-history.md) | 出现黑屏/闪退/卡死，或要改窗口/弹层 |
 | L4 | [`decisions.md`](decisions.md) | 想知道“为什么固定窗口/为什么不用 WebView2” |
 | L4 | [`history/implementation-log.md`](history/implementation-log.md) | 想知道到目前为止做过什么、下一步 |
@@ -38,7 +42,7 @@
 - 遥控器：Rust sidecar 常驻；13 键 × 3 手势在表格内直接分配并自动保存；接收测试只观察不注入。
 - 设置：`settings.json` 持久化；四个模块开关真正停启；三类写入授权在服务层强制；连接/低电量/写入失败通知。
 - 备份/诊断：固定目录导出/导入（清单校验 + 白名单）、诊断包日志脱敏。
-- 任务栏胶囊：左下角、只显示已连接设备；全屏自动隐藏；35px 高。
+- 任务栏：透明内嵌条（图标+百分比，优先任务栏左侧空位，不覆盖任务按钮）；全屏自动隐藏。
 - 稳定性：已定位并移除多类 WinUI 原生崩溃触发点，当前窗口不可缩放、映射不使用弹层。
 
 ## 重要边界

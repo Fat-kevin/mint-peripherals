@@ -1,4 +1,7 @@
 using System.Management;
+using System.Text;
+using System.Text.RegularExpressions;
+using DeviceCenterPreview.App.Services.Battery;
 using DeviceCenterPreview.Core.Models;
 using DeviceCenterPreview.Core.Services;
 using DeviceCenterPreview.Core.Settings;
@@ -28,6 +31,11 @@ namespace DeviceCenterPreview.App.Services;
 public sealed class RealPeripheralService : IPeripheralService, IDisposable
 {
     private DeviceManager? _manager;
+    private GenericHidBatteryWatcher? _genericHidBattery;
+    private GamepadBatteryWatcher? _gamepadBattery;
+    private readonly object _otherBatteryGate = new();
+    private readonly Dictionary<string, OtherBatteryEntry> _otherLastKnown = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<BatteryDeviceSnapshot> _otherBatteryDevices = Array.Empty<BatteryDeviceSnapshot>();
     private readonly HistoryStore _history;
     private readonly LogitechMouseService _mouse;
     private readonly RemoteEngineClient _remote;
@@ -44,6 +52,15 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
     // 稳定性验证通过前先关闭，只保留 VigilWatt 已验证的 DeviceManager + PnP 名称。
     private static readonly bool EnableHeadsetController = true;
     private static readonly bool EnableExtraBluetoothEnumeration = false;
+
+    /// <summary>通用 HID/Xbox 来源本轮消失后保留 last-known 的时长（期间标休眠，超过即移除）。</summary>
+    private static readonly TimeSpan OtherDeviceGrace = TimeSpan.FromMinutes(5);
+
+    /// <summary>VigilWatt 明确报告离线后 last-known 的保留时长；超过就当作已离开，不再显示。</summary>
+    private static readonly TimeSpan ManagerOfflineGrace = TimeSpan.FromMinutes(30);
+
+    private static readonly Regex MacPattern = new("[0-9a-f]{12}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly object _gate = new();
     private readonly Dictionary<PreviewKind, string> _selected = new();
@@ -94,6 +111,14 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
             _manager = CreateManager();
             _manager.Start();
         }
+
+        // 通用设备电量：VigilWatt 里被三类丢弃的键盘/手柄/音箱/第二只鼠标由 GetBatteryDevices
+        // 直接读取；两条 OS 通用路径（HID Battery Strength、Xbox WGI）用独立只读 watcher 补充。
+        _genericHidBattery = new GenericHidBatteryWatcher();
+        _genericHidBattery.Changed += (_, _) => _ = RefreshAsync();
+        _gamepadBattery = new GamepadBatteryWatcher();
+        _gamepadBattery.Changed += (_, _) => _ = RefreshAsync();
+        SyncOtherBatteryWatchers();
 
         if (_settings.RemoteModuleEnabled)
         {
@@ -165,6 +190,8 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
             _manager = null;
         }
 
+        // 「其他设备电量」开关即时生效：打开才启动 HID/Xbox watcher，关闭立即停并清空 last-known。
+        SyncOtherBatteryWatchers();
         _ = RefreshAsync();
     }
 
@@ -504,6 +531,41 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
 
     public Task RefreshMouseAsync() => Task.Run(_mouse.Refresh);
 
+    public IReadOnlyList<BatteryDeviceSnapshot> GetBatteryDevices()
+    {
+        var list = new List<BatteryDeviceSnapshot>();
+        Add(PreviewKind.Headset, BatteryDeviceKind.Headset);
+        Add(PreviewKind.Mouse, BatteryDeviceKind.Mouse);
+        Add(PreviewKind.Remote, BatteryDeviceKind.Remote);
+
+        // 三类受控设备保持原行为；「其他设备」只追加在列表尾部，由总览/任务栏自行筛选。
+        if (_settings.ShowOtherBatteryDevices)
+        {
+            list.AddRange(Volatile.Read(ref _otherBatteryDevices));
+        }
+
+        return list;
+
+        void Add(PreviewKind kind, BatteryDeviceKind target)
+        {
+            var snapshot = GetSnapshot(kind);
+            if (!snapshot.IsConnected)
+            {
+                return;
+            }
+
+            list.Add(new BatteryDeviceSnapshot(
+                target,
+                snapshot.DeviceId,
+                snapshot.DisplayName,
+                snapshot.BatteryPercent,
+                snapshot.Charging,
+                true,
+                Components: snapshot.Components,
+                Source: "vigilwatt"));
+        }
+    }
+
     public RemoteControls GetRemoteControls()
     {
         var state = _remote.State;
@@ -683,6 +745,7 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
             }
 
             LogSnapshotIfChanged();
+            UpdateOtherBatteryDevices();
             Changed?.Invoke(this, EventArgs.Empty);
         }
         finally
@@ -1198,6 +1261,444 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
         }
     }
 
+    // ---------------------------------------------------------------- 其他设备（通用电池）
+
+    private void SyncOtherBatteryWatchers()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (_settings.ShowOtherBatteryDevices)
+        {
+            _genericHidBattery?.Start();
+            _gamepadBattery?.Start();
+            return;
+        }
+
+        _genericHidBattery?.Stop();
+        _gamepadBattery?.Stop();
+        lock (_otherBatteryGate)
+        {
+            _otherLastKnown.Clear();
+            Volatile.Write(ref _otherBatteryDevices, Array.Empty<BatteryDeviceSnapshot>());
+        }
+    }
+
+    /// <summary>
+    /// 重建「其他设备」缓存：VigilWatt 里未被三类认领的设备 + 通用 HID + Xbox。来源本轮消失时
+    /// 保留 last-known 并标 IsAsleep（不伪造新鲜读数），超过 grace 后移除。只在 RefreshAsync 内串行调用。
+    /// </summary>
+    private void UpdateOtherBatteryDevices()
+    {
+        if (!_settings.ShowOtherBatteryDevices)
+        {
+            lock (_otherBatteryGate)
+            {
+                _otherLastKnown.Clear();
+                Volatile.Write(ref _otherBatteryDevices, Array.Empty<BatteryDeviceSnapshot>());
+            }
+
+            return;
+        }
+
+        var current = CollectOtherBatteryDevices();
+        var now = DateTimeOffset.Now;
+
+        lock (_otherBatteryGate)
+        {
+            foreach (var device in current)
+            {
+                _otherLastKnown[device.Id] = new OtherBatteryEntry(device, now);
+            }
+
+            var currentIds = new HashSet<string>(
+                current.Select(device => device.Id),
+                StringComparer.OrdinalIgnoreCase);
+            var expired = _otherLastKnown
+                .Where(pair => !currentIds.Contains(pair.Key) && now - pair.Value.SeenAt > OtherDeviceGrace)
+                .Select(pair => pair.Key)
+                .ToList();
+            foreach (var id in expired)
+            {
+                _otherLastKnown.Remove(id);
+            }
+
+            var merged = new List<BatteryDeviceSnapshot>(current);
+            foreach (var (id, entry) in _otherLastKnown)
+            {
+                if (currentIds.Contains(id))
+                {
+                    continue;
+                }
+
+                merged.Add(entry.Snapshot with
+                {
+                    IsAsleep = true,
+                    IsOffline = false,
+                    IsConnected = true,
+                });
+            }
+
+            merged.Sort(CompareOtherDevices);
+            Volatile.Write(ref _otherBatteryDevices, merged);
+        }
+    }
+
+    private List<BatteryDeviceSnapshot> CollectOtherBatteryDevices()
+    {
+        var claimedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var claimedMacs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var claimedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var kind in Enum.GetValues<PreviewKind>())
+        {
+            var snapshot = GetSnapshot(kind);
+            if (!string.IsNullOrWhiteSpace(snapshot.DeviceId))
+            {
+                claimedIds.Add(snapshot.DeviceId);
+                AddMacs(claimedMacs, snapshot.DeviceId);
+            }
+
+            var normalized = NormalizeDeviceName(snapshot.DisplayName);
+            if (normalized.Length >= 4)
+            {
+                claimedNames.Add(normalized);
+            }
+        }
+
+        var candidates = new List<BatteryDeviceSnapshot>();
+
+        if (_manager is not null)
+        {
+            foreach (var status in _manager.Devices)
+            {
+                if (status.Source == DeviceSource.System)
+                {
+                    // 本机电池不是外设，不进「其他设备」。
+                    continue;
+                }
+
+                if (string.Equals(status.Protocol, "历史记录", StringComparison.Ordinal))
+                {
+                    // DeviceManager 的历史离线占位不是当前设备，也不是"明确离线"。
+                    continue;
+                }
+
+                var controlled = Classify(status.Name, status.Kind);
+                if (controlled is PreviewKind.Headset or PreviewKind.Remote)
+                {
+                    // 耳机/遥控器的受控快照来自 SPP/sidecar，和 DeviceManager 常常是同一台设备的
+                    // 另一条链路（Id 与名字都可能不同）。阶段 1 不做跨链路同名合并，宁可不显示也不重复；
+                    // 第二只鼠标按任务要求单独保留。
+                    continue;
+                }
+
+                if (claimedIds.Contains(status.Id) ||
+                    IsControlledLink(status.Id, status.DisplayName, claimedMacs, claimedNames))
+                {
+                    continue;
+                }
+
+                var mapped = MapManagerOther(status);
+                if (mapped is not null)
+                {
+                    candidates.Add(mapped);
+                }
+            }
+        }
+
+        if (_gamepadBattery is not null)
+        {
+            candidates.AddRange(_gamepadBattery.Devices);
+        }
+
+        if (_genericHidBattery is not null)
+        {
+            candidates.AddRange(_genericHidBattery.Devices);
+        }
+
+        // 其它来源若与三类受控设备是同一物理设备（同 MAC/同名），不再重复出现在「其他设备」。
+        var filtered = new List<BatteryDeviceSnapshot>(candidates.Count);
+        foreach (var candidate in candidates)
+        {
+            if (IsControlledLink(candidate.Id, candidate.DisplayName, claimedMacs, claimedNames))
+            {
+                continue;
+            }
+
+            filtered.Add(candidate);
+        }
+
+        return DeduplicateOtherDevices(filtered);
+    }
+
+    private static BatteryDeviceSnapshot? MapManagerOther(DeviceStatus status)
+    {
+        var controlled = Classify(status.Name, status.Kind);
+        var kind = controlled switch
+        {
+            PreviewKind.Headset => BatteryDeviceKind.Headset,
+            PreviewKind.Mouse => BatteryDeviceKind.Mouse,
+            PreviewKind.Remote => BatteryDeviceKind.Remote,
+            _ => MapVigilKind(status.Kind, status.Name),
+        };
+
+        bool online = status.IsOnline;
+        int? percent = status.BatteryPercent is int value && value is >= 0 and <= 100 ? value : null;
+        bool asleep = false;
+        bool offline = false;
+
+        if (!online)
+        {
+            // 只有 DeviceManager 明确报告离线才走这里；超过保留期就当作已离开（不猜、不常驻）。
+            if (DateTimeOffset.Now - status.LastUpdated > ManagerOfflineGrace)
+            {
+                return null;
+            }
+
+            if (percent.HasValue)
+            {
+                asleep = true;
+            }
+            else
+            {
+                offline = true;
+            }
+        }
+
+        return new BatteryDeviceSnapshot(
+            kind,
+            status.Id,
+            string.IsNullOrWhiteSpace(status.DisplayName) ? status.Id : status.DisplayName,
+            percent,
+            online ? ToPreview(status.Charging) : PreviewCharging.Unknown,
+            online || asleep,
+            IsAsleep: asleep,
+            IsOffline: offline,
+            ConnectionType: TransportOf(status.Source),
+            Components: null,
+            Source: "vigilwatt");
+    }
+
+    private static BatteryDeviceKind MapVigilKind(VigilKind kind, string name) => kind switch
+    {
+        VigilKind.Keyboard => BatteryDeviceKind.Keyboard,
+        VigilKind.Gamepad => BatteryDeviceKind.Gamepad,
+        VigilKind.Speaker => BatteryDeviceKind.Speaker,
+        VigilKind.Headset => BatteryDeviceKind.Headset,
+        VigilKind.Mouse => BatteryDeviceKind.Mouse,
+        VigilKind.Computer => BatteryDeviceKind.Other,
+        _ => GuessKindFromName(name),
+    };
+
+    private static BatteryDeviceKind GuessKindFromName(string name)
+    {
+        if (ContainsAny(name, "键盘", "Keyboard", "Keychron", "NuPhy"))
+        {
+            return BatteryDeviceKind.Keyboard;
+        }
+
+        if (ContainsAny(name, "手柄", "Gamepad", "Controller", "Xbox", "DualSense", "DualShock", "北通"))
+        {
+            return BatteryDeviceKind.Gamepad;
+        }
+
+        if (ContainsAny(name, "音箱", "Speaker", "Soundbar"))
+        {
+            return BatteryDeviceKind.Speaker;
+        }
+
+        if (ContainsAny(name, "耳机", "Headset", "Headphone", "Buds"))
+        {
+            return BatteryDeviceKind.Headset;
+        }
+
+        if (ContainsAny(name, "鼠标", "Mouse"))
+        {
+            return BatteryDeviceKind.Mouse;
+        }
+
+        return BatteryDeviceKind.Other;
+    }
+
+    private static string TransportOf(DeviceSource source) => source switch
+    {
+        DeviceSource.Ble => "蓝牙 LE",
+        DeviceSource.BluetoothClassic => "蓝牙",
+        DeviceSource.Hid24G => "2.4G",
+        DeviceSource.System => "本机",
+        _ => "未知",
+    };
+
+    private static List<BatteryDeviceSnapshot> DeduplicateOtherDevices(List<BatteryDeviceSnapshot> candidates)
+    {
+        var result = new List<BatteryDeviceSnapshot>(candidates.Count);
+        foreach (var candidate in candidates)
+        {
+            int existingIndex = result.FindIndex(existing => IsSameOtherDevice(existing, candidate));
+            if (existingIndex < 0)
+            {
+                result.Add(candidate);
+                continue;
+            }
+
+            var existing = result[existingIndex];
+            // 优先级（调研 §5.2）：实时读数优先于休眠/离线旧值；其余保持先到先得
+            // （candidates 顺序 = VigilWatt 受控来源 > Xbox WGI > 通用 HID）。
+            if ((existing.IsAsleep || existing.IsOffline) && !candidate.IsAsleep && !candidate.IsOffline)
+            {
+                result[existingIndex] = candidate;
+            }
+        }
+
+        result.Sort(CompareOtherDevices);
+        return result;
+    }
+
+    /// <summary>
+    /// 只做「跨来源」同名去重，避免把同一来源的两只同型号鼠标（Id 不同）合并成一条。
+    /// 通用名（Receiver / HID-compliant mouse / Wireless device 等）不参与同名合并。
+    /// </summary>
+    private static bool IsSameOtherDevice(BatteryDeviceSnapshot left, BatteryDeviceSnapshot right)
+    {
+        if (string.Equals(left.Id, right.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (string.Equals(left.Source, right.Source, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!IsSpecificDeviceName(left.DisplayName) || !IsSpecificDeviceName(right.DisplayName))
+        {
+            return false;
+        }
+
+        return string.Equals(
+            NormalizeDeviceName(left.DisplayName),
+            NormalizeDeviceName(right.DisplayName),
+            StringComparison.Ordinal);
+    }
+
+    private static bool IsSpecificDeviceName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || NormalizeDeviceName(name).Length < 4)
+        {
+            return false;
+        }
+
+        return !ContainsAny(
+            name,
+            "wireless device",
+            "wireless",
+            "HID-compliant",
+            "Receiver",
+            "接收器",
+            "Bluetooth Device",
+            "Unknown",
+            "未知",
+            "游戏手柄",
+            "HID 电池设备");
+    }
+
+    private static int CompareOtherDevices(BatteryDeviceSnapshot left, BatteryDeviceSnapshot right)
+    {
+        int kind = KindRank(left.Kind).CompareTo(KindRank(right.Kind));
+        if (kind != 0)
+        {
+            return kind;
+        }
+
+        int state = StateRank(left).CompareTo(StateRank(right));
+        if (state != 0)
+        {
+            return state;
+        }
+
+        int name = string.Compare(left.DisplayName, right.DisplayName, StringComparison.CurrentCultureIgnoreCase);
+        return name != 0 ? name : string.CompareOrdinal(left.Id, right.Id);
+    }
+
+    private static int KindRank(BatteryDeviceKind kind) => kind switch
+    {
+        BatteryDeviceKind.Keyboard => 0,
+        BatteryDeviceKind.Gamepad => 1,
+        BatteryDeviceKind.Speaker => 2,
+        BatteryDeviceKind.Mouse => 3,
+        BatteryDeviceKind.Headset => 4,
+        BatteryDeviceKind.Remote => 5,
+        _ => 6,
+    };
+
+    private static int StateRank(BatteryDeviceSnapshot device) =>
+        device.IsOffline ? 2 : device.IsAsleep ? 1 : 0;
+
+    private static bool IsControlledLink(
+        string id,
+        string? name,
+        HashSet<string> claimedMacs,
+        HashSet<string> claimedNames)
+    {
+        if (claimedMacs.Count > 0)
+        {
+            foreach (var mac in ExtractMacs(id))
+            {
+                if (claimedMacs.Contains(mac))
+                {
+                    return true;
+                }
+            }
+        }
+
+        var normalized = NormalizeDeviceName(name);
+        return normalized.Length >= 4 && claimedNames.Contains(normalized);
+    }
+
+    private static void AddMacs(HashSet<string> target, string id)
+    {
+        foreach (var mac in ExtractMacs(id))
+        {
+            target.Add(mac);
+        }
+    }
+
+    private static IEnumerable<string> ExtractMacs(string id)
+    {
+        // 设备 Id 形式不一（ble:/btc: 前缀 + DeviceInformation.Id / nicehck:MAC / sayall:token），
+        // 先把分隔符去掉，再找连续的 12 位十六进制串作为蓝牙地址。
+        var normalized = id
+            .Replace(":", "", StringComparison.Ordinal)
+            .Replace("-", "", StringComparison.Ordinal)
+            .ToLowerInvariant();
+        foreach (Match match in MacPattern.Matches(normalized))
+        {
+            yield return match.Value;
+        }
+    }
+
+    private static string NormalizeDeviceName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "";
+        }
+
+        var builder = new StringBuilder(name.Length);
+        foreach (var ch in name)
+        {
+            if (char.IsLetterOrDigit(ch))
+            {
+                builder.Append(char.ToLowerInvariant(ch));
+            }
+        }
+
+        return builder.ToString();
+    }
+
     private static PreviewKind? Classify(string name, VigilKind kind)
     {
         if (kind == VigilKind.Headset ||
@@ -1249,6 +1750,8 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
         _disposed = true;
         _timer.Dispose();
         _remoteHealTimer.Dispose();
+        _genericHidBattery?.Dispose();
+        _gamepadBattery?.Dispose();
         _headsetController?.Dispose();
         _mouse.Dispose();
         _remote.Dispose();
@@ -1270,4 +1773,7 @@ public sealed class RealPeripheralService : IPeripheralService, IDisposable
         string ControlHint,
         IReadOnlyList<DeviceComponentBattery>? Components = null,
         string? Firmware = null);
+
+    /// <summary>其它设备最近一次成功采集的快照，用于来源消失后的 last-known/休眠展示。</summary>
+    private sealed record OtherBatteryEntry(BatteryDeviceSnapshot Snapshot, DateTimeOffset SeenAt);
 }

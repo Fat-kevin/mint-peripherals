@@ -32,6 +32,8 @@ public sealed class UnavailablePeripheralService(string reason) : IPeripheralSer
     {
     }
 
+    public IReadOnlyList<BatteryDeviceSnapshot> GetBatteryDevices() => [];
+
     public PeripheralSnapshot GetSnapshot(DeviceKind kind) => new(
         kind,
         "",

@@ -18,6 +18,9 @@ public interface IPeripheralService
 
     PeripheralSnapshot GetSnapshot(DeviceKind kind);
 
+    /// <summary>统一电量设备列表（三类控制设备 + 通用 Windows 电池设备）；任务栏/总览消费。</summary>
+    IReadOnlyList<BatteryDeviceSnapshot> GetBatteryDevices();
+
     string GetSelectedDeviceId(DeviceKind kind);
 
     void SelectDevice(DeviceKind kind, string deviceId);

@@ -755,3 +755,26 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
   `%APPDATA%\app.getsayall.remote-mic.windows\voice-audio-capability.json` 按输入法版本绑定。
 - 验证：sayall-windows 358 项测试通过（11 ignored）、sayall-core 测试通过；Debug 实机启动
   日志 `voice_audio capability_loaded version=3.0.3.11`；Release 自包含发布 + Inno 1.1.2 安装包。
+
+## 2026-11-27 任务栏内嵌电量条 + 通用设备电量（1.2.0，吸收 BatteryHub）
+
+- 调研：克隆并分析 lo0kie/Wireless-Device-Battery-Monitor（BatteryHub，C++/Win32，GPL-3.0）；
+  真机验证其任务栏形态与 Windows 11 任务栏几何（UIA 实测：任务按钮 809–1425、托盘 1503、
+  Widgets 6–158、Start 496–541）；产出任务栏/设备两份调研 + 设计 + 计划文档（docs/investigations）。
+- 显示：旧胶囊（固定 235 DIP）改为透明内嵌条 `TaskbarBatteryStrip`：Segoe Fluent/MDL2 图标 +
+  百分比、13/16/5/14/8 DIP、任务栏主题、低电/充电/充满/休眠状态、原生 tooltip 与右键菜单、
+  TaskbarCreated 重建；位置优先任务栏左侧空位（`Start`/`ReBar` 左边、预留 Widgets 170 DIP），
+  放不下回退通知区域左侧；设置新增 位置/样式/字号/背景板/休眠显示。
+- 设备：新增 `BatteryDeviceSnapshot`/`BatteryDeviceKind` 契约与 `GetBatteryDevices()`；
+  `RealPeripheralService` 放开三类以外的 VigilWatt/通用 HID/Xbox 设备（去重、last-known、
+  ShowOtherBatteryDevices 开关）；总览新增「其他设备」6 槽位区块。
+- 修正：清理旧胶囊代码与文档引用；补充 `tools/capture-taskbar.ps1` 截图脚本。
+- 验证：x64 Debug 0 警告；任务栏条实机截图（左侧空位、三设备图标+70/90/92%、无覆盖）；
+  设置页位置/样式可选；Build 与 Core 测试（待最终跑）等见发布记录。
+
+### 1.2.1 / 1.2.2 追加（2026-11-27）
+
+- 1.2.1：任务栏条新增「左下角」位置（固定原胶囊位置 235 DIP）；右侧放不下时回退左侧空位，
+  仍放不下则隐藏，不覆盖任务按钮。
+- 1.2.2：耳机在任务栏分左右耳显示电量（SPP `LeftEarPercent`/`RightEarPercent` → `左 70% 右 60%`），
+  低电/充电/充满按双耳状态判断；只有系统聚合电量时仍显示单值；tooltip 保留左/右/充电盒明细。

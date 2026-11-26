@@ -80,6 +80,113 @@
                                   Style="{StaticResource BenchToggleSwitchStyle}"
                                   VerticalAlignment="Center" Toggled="WallpaperTint_Toggled" />
                 </Grid>
+
+                <!-- 任务栏显示 -->
+                <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,18,0,16" />
+                <TextBlock Text="任务栏显示" Style="{StaticResource BenchSectionTitleStyle}" />
+                <TextBlock Text="在通知区域左侧内嵌图标与电量，不再使用悬浮胶囊；改完立即生效。"
+                           Style="{StaticResource BenchFootnoteStyle}" Margin="0,2,0,0" />
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="任务栏电量条" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="关闭后不绘制任务栏条；托盘图标仍可打开主窗口。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="TaskbarStripSwitch" Grid.Column="1"
+                                  Style="{StaticResource BenchToggleSwitchStyle}"
+                                  VerticalAlignment="Center" Toggled="Taskbar_Toggled" />
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="显示样式" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="图标 + 百分比最完整；仅图标最省空间。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ComboBox x:Name="TaskbarStyleCombo" Grid.Column="1" Width="180"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="Taskbar_SelectionChanged" />
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="位置" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="自动优先左侧空位；「左下角」固定在原胶囊位置；任务栏很空可选通知区域左侧。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ComboBox x:Name="TaskbarPositionCombo" Grid.Column="1" Width="180"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="Taskbar_SelectionChanged" />
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="字号" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="随任务栏 DPI 缩放；15 适合高分辨率屏。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ComboBox x:Name="TaskbarFontSizeCombo" Grid.Column="1" Width="120"
+                              Style="{StaticResource BenchComboBoxStyle}"
+                              SelectionChanged="Taskbar_SelectionChanged" />
+                </Grid>
+                <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,14,0,14" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="背景板" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="默认关闭；透明 / 亮色壁纸下看不清时打开（低透明度内嵌底板）。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="TaskbarBackgroundSwitch" Grid.Column="1"
+                                  Style="{StaticResource BenchToggleSwitchStyle}"
+                                  VerticalAlignment="Center" Toggled="Taskbar_Toggled" />
+                </Grid>
+                <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,14,0,14" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="显示休眠设备" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="显示最近一次读数已过期的设备；整条变暗表示不是实时值。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="TaskbarSleepingSwitch" Grid.Column="1"
+                                  Style="{StaticResource BenchToggleSwitchStyle}"
+                                  VerticalAlignment="Center" Toggled="Taskbar_Toggled" />
+                </Grid>
+                <Border Style="{StaticResource BenchSectionRuleStyle}" Margin="0,14,0,14" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="显示其他设备" Style="{StaticResource BenchValueStyle}" />
+                        <TextBlock Text="键盘 / 手柄 / 音箱等通用 Windows 电池设备也出现在条与总览里。"
+                                   Style="{StaticResource BenchFootnoteStyle}" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="OtherBatteryDevicesSwitch" Grid.Column="1"
+                                  Style="{StaticResource BenchToggleSwitchStyle}"
+                                  VerticalAlignment="Center" Toggled="Taskbar_Toggled" />
+                </Grid>
             </StackPanel>
 
             <!-- 启动 -->

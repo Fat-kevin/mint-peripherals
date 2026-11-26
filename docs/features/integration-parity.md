@@ -152,3 +152,13 @@
   保存回读和备份白名单。
 - 未接入项都给出了理由：需要破解/真机验证、会改系统全局状态、或属于原项目也没有的
   低价值桌面差异。没有用假数据或假成功填充界面。
+
+
+## 通用 Windows 电池聚合（1.2.0）
+
+- 数据链路：`VigilWatt.DeviceManager` 中未被耳机/鼠标/遥控器认领的设备 → `BatteryDeviceSnapshot`；
+  另加 `GenericHidBatteryWatcher`（HID Usage Page 0x06 / Usage 0x20 Battery Strength）与
+  `GamepadBatteryWatcher`（`Windows.Gaming.Input.Gamepad.TryGetBatteryReport`）。
+- 展示：任务栏内嵌条与总览「其他设备」区块（固定 6 个槽位）；设置可关闭其他设备电量。
+- 只读；未启用默认关闭的 VigilWatt 厂商插件（避免双 HID++ 会话）；厂商协议扩展见
+  `docs/investigations/2026-11-27-batteryhub-device-research.md` 阶段 2/3。

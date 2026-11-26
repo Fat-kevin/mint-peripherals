@@ -22,6 +22,54 @@ public sealed partial class SettingsPage : Page, IThemeAware
         "跟随系统",
     ];
 
+    private static readonly string[] TaskbarStyleValues =
+    [
+        "icon+percent",
+        "percent",
+        "icon",
+    ];
+
+    private static readonly string[] TaskbarStyleLabels =
+    [
+        "图标 + 百分比",
+        "仅百分比",
+        "仅图标",
+    ];
+
+    private static readonly string[] TaskbarPositionValues =
+    [
+        "auto",
+        "corner",
+        "tray",
+        "start",
+    ];
+
+    private static readonly string[] TaskbarPositionLabels =
+    [
+        "自动（推荐）",
+        "左下角",
+        "通知区域左侧",
+        "任务栏左侧",
+    ];
+
+    private static readonly string[] TaskbarFontSizeValues =
+    [
+        "small",
+        "medium",
+        "large",
+    ];
+
+    private static readonly string[] TaskbarFontSizeLabels =
+    [
+        "小",
+        "中",
+        "大",
+    ];
+
+    // 任务栏条右键「任务栏显示设置」需要在不改主窗口导航实现的前提下切到「外观」分类。
+    private static SettingsPage? _instance;
+    private static int _pendingCategory = -1;
+
     private readonly FrameworkElement[] _categories;
     private readonly Button[] _tabs;
     private int _category;
@@ -36,11 +84,27 @@ public sealed partial class SettingsPage : Page, IThemeAware
         _categories = [Category0, Category1, Category2, Category3, Category4, Category5];
         _tabs = [Tab0, Tab1, Tab2, Tab3, Tab4, Tab5];
         ThemeCombo.ItemsSource = ThemeModeLabels;
+        TaskbarStyleCombo.ItemsSource = TaskbarStyleLabels;
+        TaskbarPositionCombo.ItemsSource = TaskbarPositionLabels;
+        TaskbarFontSizeCombo.ItemsSource = TaskbarFontSizeLabels;
         LowBatteryThresholdCombo.ItemsSource = new[] { 0, 10, 15, 20, 25, 30, 40, 50, 60, 80 };
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         PageScroll.SizeChanged += (_, _) => PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
         ApplyCategory(0);
+    }
+
+    /// <summary>供 App 在任务栏条右键「任务栏显示设置」时调用：切到指定分类（0=外观）。</summary>
+    public static void RequestCategory(int category)
+    {
+        var page = _instance;
+        if (page is not null)
+        {
+            page.ApplyCategory(category);
+            return;
+        }
+
+        _pendingCategory = category;
     }
 
     private void Category_Changed(object sender, RoutedEventArgs e)
@@ -81,6 +145,13 @@ public sealed partial class SettingsPage : Page, IThemeAware
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _instance = this;
+        if (_pendingCategory >= 0)
+        {
+            ApplyCategory(_pendingCategory);
+            _pendingCategory = -1;
+        }
+
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
         LoadSettings();
         ResetScrollToTop();
@@ -94,6 +165,11 @@ public sealed partial class SettingsPage : Page, IThemeAware
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        if (ReferenceEquals(_instance, this))
+        {
+            _instance = null;
+        }
+
         _resetTimer?.Stop();
         _resetTimer = null;
         _resetArmed = false;
@@ -122,6 +198,17 @@ public sealed partial class SettingsPage : Page, IThemeAware
         {
             LowBatteryThresholdCombo.SelectedItem = 20;
         }
+
+        TaskbarStripSwitch.IsOn = settings.TaskbarStripEnabled;
+        var taskbarStyleIndex = Array.IndexOf(TaskbarStyleValues, settings.TaskbarStripStyle);
+        TaskbarStyleCombo.SelectedIndex = taskbarStyleIndex >= 0 ? taskbarStyleIndex : 0;
+        var taskbarFontSizeIndex = Array.IndexOf(TaskbarFontSizeValues, settings.TaskbarStripFontSize);
+        TaskbarFontSizeCombo.SelectedIndex = taskbarFontSizeIndex >= 0 ? taskbarFontSizeIndex : 1;
+        var taskbarPositionIndex = Array.IndexOf(TaskbarPositionValues, settings.TaskbarStripPosition);
+        TaskbarPositionCombo.SelectedIndex = taskbarPositionIndex >= 0 ? taskbarPositionIndex : 0;
+        TaskbarBackgroundSwitch.IsOn = settings.TaskbarStripBackground;
+        TaskbarSleepingSwitch.IsOn = settings.TaskbarStripShowSleeping;
+        OtherBatteryDevicesSwitch.IsOn = settings.ShowOtherBatteryDevices;
 
         var startupEnabled = StartupService.IsEnabled();
         StartWithWindowsSwitch.IsOn = startupEnabled;
@@ -166,6 +253,19 @@ public sealed partial class SettingsPage : Page, IThemeAware
         LowBatteryThreshold = LowBatteryThresholdCombo.SelectedItem is int threshold
             ? threshold
             : App.Settings.LowBatteryThreshold,
+        TaskbarStripEnabled = TaskbarStripSwitch.IsOn,
+        TaskbarStripStyle = TaskbarStyleCombo.SelectedIndex is >= 0 and < 3
+            ? TaskbarStyleValues[TaskbarStyleCombo.SelectedIndex]
+            : App.Settings.TaskbarStripStyle,
+        TaskbarStripFontSize = TaskbarFontSizeCombo.SelectedIndex is >= 0 and < 3
+            ? TaskbarFontSizeValues[TaskbarFontSizeCombo.SelectedIndex]
+            : App.Settings.TaskbarStripFontSize,
+        TaskbarStripPosition = TaskbarPositionCombo.SelectedIndex is >= 0 and < 4
+            ? TaskbarPositionValues[TaskbarPositionCombo.SelectedIndex]
+            : App.Settings.TaskbarStripPosition,
+        TaskbarStripBackground = TaskbarBackgroundSwitch.IsOn,
+        TaskbarStripShowSleeping = TaskbarSleepingSwitch.IsOn,
+        ShowOtherBatteryDevices = OtherBatteryDevicesSwitch.IsOn,
     };
 
     private void SaveSettings()
@@ -188,6 +288,10 @@ public sealed partial class SettingsPage : Page, IThemeAware
     private void Write_Toggled(object sender, RoutedEventArgs e) => SaveSettings();
 
     private void Notify_Toggled(object sender, RoutedEventArgs e) => SaveSettings();
+
+    private void Taskbar_Toggled(object sender, RoutedEventArgs e) => SaveSettings();
+
+    private void Taskbar_SelectionChanged(object sender, SelectionChangedEventArgs e) => SaveSettings();
 
     private void Startup_Toggled(object sender, RoutedEventArgs e)
     {

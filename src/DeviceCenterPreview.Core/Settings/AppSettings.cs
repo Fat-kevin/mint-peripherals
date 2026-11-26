@@ -60,6 +60,27 @@ public sealed record AppSettings
     /// <summary>低于等于该值提醒；0 表示关闭低电提醒。</summary>
     public int LowBatteryThreshold { get; init; } = 20;
 
+    /// <summary>任务栏内嵌电量条（替代旧胶囊）。</summary>
+    public bool TaskbarStripEnabled { get; init; } = true;
+
+    /// <summary>任务栏条样式：icon+percent / percent / icon。</summary>
+    public string TaskbarStripStyle { get; init; } = "icon+percent";
+
+    /// <summary>任务栏字号档：small / medium / large。</summary>
+    public string TaskbarStripFontSize { get; init; } = "medium";
+
+    /// <summary>任务栏条位置：auto（优先任务栏左侧空位）/ corner（左下角，原胶囊位置）/ tray（通知区域左侧）/ start（任务栏左侧）。</summary>
+    public string TaskbarStripPosition { get; init; } = "auto";
+
+    /// <summary>任务栏条背景板（默认关闭，透明任务栏主题时可开）。</summary>
+    public bool TaskbarStripBackground { get; init; } = false;
+
+    /// <summary>任务栏条显示休眠/旧值设备。</summary>
+    public bool TaskbarStripShowSleeping { get; init; } = true;
+
+    /// <summary>总览/任务栏显示三类之外的通用 Windows 电池设备。</summary>
+    public bool ShowOtherBatteryDevices { get; init; } = true;
+
     public static AppSettings Default { get; } = new();
 
     /// <summary>把外部文件里的非法值收敛到可用范围；未知字段由 JSON 反序列化忽略。</summary>
@@ -68,6 +89,9 @@ public sealed record AppSettings
         SchemaVersion = CurrentSchemaVersion,
         ThemeMode = ThemeModes.Normalize(ThemeMode),
         LowBatteryThreshold = Math.Clamp(LowBatteryThreshold, 0, 100),
+        TaskbarStripStyle = TaskbarStripStyle is "percent" or "icon" ? TaskbarStripStyle : "icon+percent",
+        TaskbarStripFontSize = TaskbarStripFontSize is "small" or "large" ? TaskbarStripFontSize : "medium",
+        TaskbarStripPosition = TaskbarStripPosition is "corner" or "tray" or "start" ? TaskbarStripPosition : "auto",
     };
 
     public bool IsModuleEnabled(string module) => module switch

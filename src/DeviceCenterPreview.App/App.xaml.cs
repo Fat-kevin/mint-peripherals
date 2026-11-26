@@ -1,9 +1,13 @@
 using System.Threading;
 using DeviceCenterPreview.App.Services;
+using DeviceCenterPreview.App.Views;
 using DeviceCenterPreview.Core.Services;
 using DeviceCenterPreview.Core.Settings;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation.Peers;
+using Microsoft.UI.Xaml.Automation.Provider;
+using Microsoft.UI.Xaml.Controls;
 
 namespace DeviceCenterPreview.App;
 
@@ -29,7 +33,7 @@ public partial class App : Application
     private static RealPeripheralService? _realService;
     private static bool _trayHintShown;
     private Window? _window;
-    private PreviewTaskbarPill? _taskbarPill;
+    private static TaskbarBatteryStrip? _taskbarStrip;
     private TrayService? _tray;
 
     public App()
@@ -45,7 +49,7 @@ public partial class App : Application
         };
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
         {
-            _taskbarPill?.Dispose();
+            _taskbarStrip?.Dispose();
             _tray?.Dispose();
             _realService?.Dispose();
             HeldKeyGuard.ReleaseModifiers("process exit");
@@ -93,11 +97,16 @@ public partial class App : Application
 
         try
         {
-            _taskbarPill = new PreviewTaskbarPill(PeripheralService, ShowMainWindow);
+            _taskbarStrip = new TaskbarBatteryStrip(
+                PeripheralService,
+                () => Settings,
+                ShowMainWindow,
+                OpenTaskbarDisplaySettings,
+                ExitApplication);
         }
         catch (Exception ex)
         {
-            LogCrash("TaskbarPill", ex);
+            LogCrash("TaskbarStrip", ex);
         }
 
         try
@@ -128,6 +137,35 @@ public partial class App : Application
         }
 
         ShowWindow(_window);
+    }
+
+    /// <summary>
+    /// 任务栏条右键「任务栏显示设置」：先显示主窗口，再走它自己的设置导航。
+    /// 不改主窗口实现，只在 App 层触发侧栏「设置」按钮（等价用户点击），保证选中态/返回栈一致。
+    /// </summary>
+    private void OpenTaskbarDisplaySettings()
+    {
+        ShowMainWindow();
+        if (_window is not MainWindow window)
+        {
+            return;
+        }
+
+        SettingsPage.RequestCategory(0);
+        try
+        {
+            if (window.Content is FrameworkElement root &&
+                root.FindName("SettingsNav") is Button settingsButton)
+            {
+                var peer = new ButtonAutomationPeer(settingsButton);
+                ((IInvokeProvider)peer).Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            // 导航失败不阻塞打开主窗口；用户仍可手动点设置。
+            LogCrash("TaskbarSettingsNavigation", ex);
+        }
     }
 
     private static void ShowWindow(Window window)
@@ -185,6 +223,9 @@ public partial class App : Application
             Notify("设置应用失败", ex.Message, NotificationSeverity.Error);
             LogCrash("SettingsApply", ex);
         }
+
+        // 任务栏条读取 App.Settings 快照；清签名后立即按新开关/样式/字号重绘。
+        _taskbarStrip?.ApplySettings();
     }
 
     public static void Notify(

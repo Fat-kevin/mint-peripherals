@@ -9,7 +9,7 @@
 │  ├─ RealHeadsetController   │  耳机 SPP（YuandaoTws）
 │  ├─ LogitechMouseService    │  HID++（VigilWatt HidppIO）
 │  ├─ RemoteEngineClient      │  TCP JSONL 客户端
-│  ├─ PreviewTaskbarPill      │  Shell_TrayWnd 子窗口（GDI+ 分层）
+│  ├─ TaskbarBatteryStrip     │  Shell_TrayWnd 子窗口（GDI+ 分层，内嵌图标+电量）
 │  └─ TrayService             │  Shell_NotifyIcon
 └──────────────┬──────────────┘
                │ 127.0.0.1 随机端口 + 一次性 token + UTF-8 JSONL
@@ -36,7 +36,7 @@
 | 设置 | `Core/Settings/AppSettings.cs` | `AppSettings` 记录 + `AppSettingsStore`（原子保存/损坏隔离/阈值夹紧） |
 | 控制器 | `RealHeadsetController` / `LogitechMouseService` / `RemoteEngineClient` | 各自设备协议与状态；均支持 Stop/SetEnabled |
 | 页面 | `Views/*` | 只调用 `App.PeripheralService`；不直接碰协议 |
-| 桌面集成 | `PreviewTaskbarPill` / `TrayService` | 任务栏电量、托盘 |
+| 桌面集成 | `TaskbarBatteryStrip` / `TrayService` / `Services/Battery/*` | 任务栏内嵌电量、托盘、通用设备电量 |
 
 ### 数据流
 
@@ -73,8 +73,8 @@
 - 窗口固定 **1280×840**，不可缩放/最大化；尺寸只在 `InitializeComponent` 之前设置一次，
   之后不再 resize。原因见 [`decisions.md`](decisions.md) 与 [`stability/crash-history.md`](stability/crash-history.md)。
 - 自定义标题栏 48px，标题「外设中枢」。
-- 任务栏胶囊：`Shell_TrayWnd` 的 layered child，左下角 235 DIP 锚点；只显示已连接设备；35px 高；全屏自动隐藏。
-- 托盘：运行期间常驻；双击恢复；右键打开/退出；`X` / Alt+F4 隐藏主窗口，托盘和任务栏胶囊继续运行，真正退出走托盘右键“退出”。
+- 任务栏内嵌条：`Shell_TrayWnd` 的 layered child，透明无底板；优先任务栏左侧空位（`Start`/`ReBar` 左边，预留小组件区），放不下回退通知区域左侧；图标+百分比、低电/充电/充满/休眠状态；全屏自动隐藏。
+- 托盘：运行期间常驻；双击恢复；右键打开/退出；`X` / Alt+F4 隐藏主窗口，托盘和任务栏条继续运行，真正退出走托盘右键“退出”。
 
 ## 5. 线程与生命周期
 

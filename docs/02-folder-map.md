@@ -13,7 +13,7 @@ device-center-preview/
 │  │  ├─ Models/PeripheralModels.cs   # Snapshot / Controls / KeyMapping / 事件模型
 │  │  └─ Services/                    # IPeripheralService、Mock、Unavailable、WriteResult
 │  └─ DeviceCenterPreview.App/        # WinUI 3 宿主、真实设备服务、页面
-│     ├─ App.xaml(.cs)                # 生命周期、单实例、托盘、任务栏胶囊
+│     ├─ App.xaml(.cs)                # 生命周期、单实例、托盘、任务栏内嵌条
 │     ├─ MainWindow.xaml(.cs)         # 固定窗口尺寸（仅 XAML 初始化前设置一次）、导航、图标
 │     ├─ Views/                       # 5 个页面（设备中心/耳机/鼠标/遥控器/设置）
 │     ├─ Services/
@@ -24,7 +24,8 @@ device-center-preview/
 │     │  ├─ TrayService.cs            # Shell_NotifyIcon 托盘
 │     │  ├─ Mouse/LogitechMouseService.cs # HID++ 读/写/板载配置
 │     │  ├─ Remote/RemoteEngineClient.cs  # sidecar 启动/TCP/JSONL/状态
-│     │  └─ Taskbar/PreviewTaskbarPill.cs # 任务栏分层贴片 + 全屏隐藏
+│     │  ├─ Taskbar/TaskbarBatteryStrip.cs # 任务栏内嵌条 + 全屏隐藏 + 原生菜单
+│     │  └─ Battery/GenericHidBatteryWatcher.cs / GamepadBatteryWatcher.cs # 通用设备电量
 │     └─ Assets/
 │        ├─ PeripheralHub.ico/.png    # 当前应用图标「外设中枢」
 │        ├─ VigilWatt.ico/.png        # 旧图标（保留未用）

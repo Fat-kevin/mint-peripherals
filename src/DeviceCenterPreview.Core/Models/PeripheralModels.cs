@@ -24,6 +24,35 @@ public sealed record DeviceComponentBattery(
     int? Percent,
     ChargingState Charging);
 
+/// <summary>任务栏/总览统一消费的设备类别（含 BatteryHub 式通用设备）。</summary>
+public enum BatteryDeviceKind
+{
+    Headset,
+    Mouse,
+    Remote,
+    Keyboard,
+    Gamepad,
+    Speaker,
+    Other,
+}
+
+/// <summary>
+/// 统一电量设备快照：现有三类控制设备与通用 Windows 电池设备共用，
+/// 任务栏内嵌条与总览「其他设备」只消费这一份数据。
+/// </summary>
+public sealed record BatteryDeviceSnapshot(
+    BatteryDeviceKind Kind,
+    string Id,
+    string DisplayName,
+    int? Percent,
+    ChargingState Charging,
+    bool IsConnected,
+    bool IsAsleep = false,
+    bool IsOffline = false,
+    string? ConnectionType = null,
+    IReadOnlyList<DeviceComponentBattery>? Components = null,
+    string Source = "vigilwatt");
+
 /// <summary>设备中心与二级页共用的只读快照。</summary>
 public sealed record PeripheralSnapshot(
     DeviceKind Kind,

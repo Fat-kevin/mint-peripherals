@@ -1,15 +1,27 @@
-﻿using DeviceCenterPreview.App.Services;
+using DeviceCenterPreview.App.Services;
 using DeviceCenterPreview.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace DeviceCenterPreview.App.Views;
 
 public sealed partial class DeviceCenterPage : Page, IThemeAware
 {
+    private const string KeyboardGlyph = "\uE765";
+    private const string GamepadGlyph = "\uE7FC";
+    private const string SpeakerGlyph = "\uE767";
+    private const string HeadsetGlyph = "\uE7F6";
+    private const string MouseGlyph = "\uE962";
+    private const string RemoteGlyph = "\uE7FC";
+    private const string BatteryGlyph = "\uE83F";
+
+    private OtherRowViews[] _otherRows = [];
+
     public DeviceCenterPage()
     {
         InitializeComponent();
+        _otherRows = CreateOtherRows();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -36,12 +48,15 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         var mouse = App.PeripheralService.GetSnapshot(DeviceKind.Mouse);
         var remote = App.PeripheralService.GetSnapshot(DeviceKind.Remote);
 
+        var otherDevices = GetOtherBatteryDevices(headset, mouse, remote);
         var online = (headset.IsConnected ? 1 : 0) + (mouse.IsConnected ? 1 : 0) +
                      (remote.IsConnected ? 1 : 0);
-        HeaderSubtitle.Text = online switch
+        HeaderSubtitle.Text = (online, otherDevices.Count) switch
         {
-            0 => "没有设备在线 · 检查蓝牙配对或接收器",
-            _ => $"{online} 台设备在线 · 数值全部来自真实链路",
+            (0, 0) => "没有设备在线 · 检查蓝牙配对或接收器",
+            (0, _) => $"{otherDevices.Count} 台其他设备 · 数值全部来自真实链路",
+            (_, 0) => $"{online} 台设备在线 · 数值全部来自真实链路",
+            _ => $"{online} 台设备在线 · 另有 {otherDevices.Count} 台其他设备",
         };
 
         // 耳机：三分量电量
@@ -75,7 +90,177 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
             ? "按键映射与语音可写"
             : remote.ControlHint ?? remote.StatusText;
         SetBattery(remote, RemoteBattery, RemoteBatterySuffix, RemoteFill, RemoteRest);
+
+        UpdateOtherDeviceRows(otherDevices);
     }
+
+    private OtherRowViews[] CreateOtherRows() =>
+    [
+        new(OtherRow0, OtherIcon0, OtherName0, OtherPercent0, OtherState0),
+        new(OtherRow1, OtherIcon1, OtherName1, OtherPercent1, OtherState1),
+        new(OtherRow2, OtherIcon2, OtherName2, OtherPercent2, OtherState2),
+        new(OtherRow3, OtherIcon3, OtherName3, OtherPercent3, OtherState3),
+        new(OtherRow4, OtherIcon4, OtherName4, OtherPercent4, OtherState4),
+        new(OtherRow5, OtherIcon5, OtherName5, OtherPercent5, OtherState5),
+    ];
+
+    /// <summary>
+    /// 从 GetBatteryDevices() 里剥掉三类受控设备，得到总览「其他设备」。
+    /// GetBatteryDevices 前三条是受控设备（可能因未连接而缺席），所以按快照 DeviceId 匹配而不是切片。
+    /// </summary>
+    private static List<BatteryDeviceSnapshot> GetOtherBatteryDevices(
+        PeripheralSnapshot headset,
+        PeripheralSnapshot mouse,
+        PeripheralSnapshot remote)
+    {
+        var controlled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AddControlledId(controlled, headset);
+        AddControlledId(controlled, mouse);
+        AddControlledId(controlled, remote);
+
+        var others = new List<BatteryDeviceSnapshot>();
+        foreach (var device in App.PeripheralService.GetBatteryDevices())
+        {
+            if (!controlled.Contains(device.Id))
+            {
+                others.Add(device);
+            }
+        }
+
+        return others;
+    }
+
+    private static void AddControlledId(HashSet<string> target, PeripheralSnapshot snapshot)
+    {
+        if (snapshot.IsConnected && !string.IsNullOrWhiteSpace(snapshot.DeviceId))
+        {
+            target.Add(snapshot.DeviceId);
+        }
+    }
+
+    /// <summary>固定 6 个预置槽位：只改 Text/Visibility/Foreground，不重建 ItemsSource 或控件。</summary>
+    private void UpdateOtherDeviceRows(IReadOnlyList<BatteryDeviceSnapshot> devices)
+    {
+        OtherDevicesSection.Visibility = devices.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        if (devices.Count > _otherRows.Length)
+        {
+            OtherDevicesCount.Text = $"{devices.Count} 台 · 还有 {devices.Count - _otherRows.Length} 台未显示";
+        }
+        else
+        {
+            OtherDevicesCount.Text = devices.Count > 0 ? $"{devices.Count} 台" : "";
+        }
+
+        for (int index = 0; index < _otherRows.Length; index++)
+        {
+            var row = _otherRows[index];
+            if (index >= devices.Count)
+            {
+                row.Root.Visibility = Visibility.Collapsed;
+                continue;
+            }
+
+            var device = devices[index];
+            row.Root.Visibility = Visibility.Visible;
+            row.Icon.Glyph = GlyphFor(device.Kind);
+            row.Icon.Foreground = IconBrush(device);
+            row.Name.Text = device.DisplayName;
+            row.Percent.Text = device.Percent is int percent ? $"{percent}%" : "—";
+            row.Percent.Foreground = PercentBrush(device);
+            row.State.Text = StateText(device);
+            row.State.Foreground = StateBrush(device);
+        }
+    }
+
+    private static string GlyphFor(BatteryDeviceKind kind) => kind switch
+    {
+        BatteryDeviceKind.Keyboard => KeyboardGlyph,
+        BatteryDeviceKind.Gamepad => GamepadGlyph,
+        BatteryDeviceKind.Speaker => SpeakerGlyph,
+        BatteryDeviceKind.Headset => HeadsetGlyph,
+        BatteryDeviceKind.Mouse => MouseGlyph,
+        BatteryDeviceKind.Remote => RemoteGlyph,
+        _ => BatteryGlyph,
+    };
+
+    private static string StateText(BatteryDeviceSnapshot device)
+    {
+        if (device.IsOffline)
+        {
+            return "离线";
+        }
+
+        if (device.IsAsleep)
+        {
+            return "休眠 · 上次读数";
+        }
+
+        return device.Charging switch
+        {
+            ChargingState.Charging => "充电中",
+            ChargingState.Full => "已充满",
+            ChargingState.Discharging => "放电中",
+            _ => device.IsConnected ? "在线" : "未连接",
+        };
+    }
+
+    private Brush IconBrush(BatteryDeviceSnapshot device)
+    {
+        if (device.IsOffline || device.IsAsleep)
+        {
+            return AppTheme.GetBrush(this, "AppOfflineBrush");
+        }
+
+        return device.Kind switch
+        {
+            BatteryDeviceKind.Headset => AppTheme.GetBrush(this, "AppHeadsetBrush"),
+            BatteryDeviceKind.Mouse => AppTheme.GetBrush(this, "AppMouseBrush"),
+            BatteryDeviceKind.Remote => AppTheme.GetBrush(this, "AppRemoteBrush"),
+            _ => AppTheme.GetBrush(this, "AppTextTertiaryBrush"),
+        };
+    }
+
+    private Brush PercentBrush(BatteryDeviceSnapshot device)
+    {
+        if (device.IsOffline || device.IsAsleep)
+        {
+            return AppTheme.GetBrush(this, "AppTextTertiaryBrush");
+        }
+
+        // 低电 = 颜色 + 文案双编码（状态列写"在线/放电中"），不单靠颜色。
+        if (device.Percent is int percent && percent <= 15 &&
+            device.Charging is not (ChargingState.Charging or ChargingState.Full))
+        {
+            return AppTheme.GetBrush(this, "AppDangerBrush");
+        }
+
+        return AppTheme.GetBrush(this, "AppTextPrimaryBrush");
+    }
+
+    private Brush StateBrush(BatteryDeviceSnapshot device)
+    {
+        if (device.IsOffline)
+        {
+            return AppTheme.GetBrush(this, "AppOfflineBrush");
+        }
+
+        if (device.IsAsleep)
+        {
+            return AppTheme.GetBrush(this, "AppTextTertiaryBrush");
+        }
+
+        return device.Charging is ChargingState.Charging or ChargingState.Full
+            ? AppTheme.GetBrush(this, "AppSuccessBrush")
+            : AppTheme.GetBrush(this, "AppTextSecondaryBrush");
+    }
+
+    private sealed record OtherRowViews(
+        Border Root,
+        FontIcon Icon,
+        TextBlock Name,
+        TextBlock Percent,
+        TextBlock State);
 
     private void SetComponent(
         PeripheralSnapshot snapshot,

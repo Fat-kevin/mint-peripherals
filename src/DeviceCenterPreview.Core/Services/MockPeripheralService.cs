@@ -99,6 +99,34 @@ public sealed class MockPeripheralService : IPeripheralService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    public IReadOnlyList<BatteryDeviceSnapshot> GetBatteryDevices()
+    {
+        var list = new List<BatteryDeviceSnapshot>();
+        Add(DeviceKind.Headset, BatteryDeviceKind.Headset);
+        Add(DeviceKind.Mouse, BatteryDeviceKind.Mouse);
+        Add(DeviceKind.Remote, BatteryDeviceKind.Remote);
+        return list;
+
+        void Add(DeviceKind kind, BatteryDeviceKind target)
+        {
+            var snapshot = GetSnapshot(kind);
+            if (!snapshot.IsConnected)
+            {
+                return;
+            }
+
+            list.Add(new BatteryDeviceSnapshot(
+                target,
+                snapshot.DeviceId,
+                snapshot.DisplayName,
+                snapshot.BatteryPercent,
+                snapshot.Charging,
+                true,
+                Components: snapshot.Components,
+                Source: "mock"));
+        }
+    }
+
     public PeripheralSnapshot GetSnapshot(DeviceKind kind) => kind switch
     {
         DeviceKind.Headset => GetHeadsetSnapshot(),
