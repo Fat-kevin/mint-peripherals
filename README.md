@@ -9,7 +9,7 @@
 耳机调音、鼠标调档、遥控映射、任务栏电量值守——一台 Windows 设备上的外设控制台，
 原生 WinUI 3，不塞浏览器内核，不画假数据。
 
-[![Version](https://img.shields.io/badge/version-1.2.2-0E9A76?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-0E9A76?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0E9A76?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
 [![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square)](src)
@@ -33,27 +33,27 @@
 
 **🧱 稳定是纪律，不是口号** —— 固定窗口杜绝 resize 崩溃、页面内编辑取代弹层、15 秒刷新只改文本不重建控件。每一类黑屏触发点都有[档案可查](docs/stability/crash-history.md)，踩过的坑不再踩第二次。
 
-**🚀 装完即用** —— 安装包自带 .NET 8 运行时与全部依赖，按用户安装不需要管理员；升级直接双击覆盖，设置原地保留。
+**🚀 装完即用** —— 安装包内置 WinUI 与全部依赖，按用户安装不需要管理员；需要系统已安装 .NET 8 Desktop Runtime（WinUI 3 必需）。升级直接双击覆盖，设置原地保留。
 
 ## 📸 界面
 
 | 设备中心 · 总览 | 鼠标 · HID++ |
 |:---:|:---:|
-| ![设备中心](docs/screenshots/hub-1.2.2.png) | ![鼠标页](docs/screenshots/mouse-1.2.2.png) |
+| ![设备中心](docs/screenshots/hub-1.3.0.png) | ![鼠标页](docs/screenshots/mouse-1.3.0.png) |
 
 | 耳机 · SPP（双耳独立电量） | 遥控器 · rc003 |
 |:---:|:---:|
-| ![耳机页](docs/screenshots/headset-1.2.2.png) | ![遥控器页](docs/screenshots/remote-1.2.2.png) |
+| ![耳机页](docs/screenshots/headset-1.3.0.png) | ![遥控器页](docs/screenshots/remote-1.3.0.png) |
 
 | 设置 · 外观与授权 | 深色 + 壁纸染色 |
 |:---:|:---:|
-| ![设置页](docs/screenshots/settings-1.2.2.png) | ![深色主题](docs/screenshots/dark-1.2.2.png) |
+| ![设置页](docs/screenshots/settings-1.3.0.png) | ![深色主题](docs/screenshots/dark-1.3.0.png) |
 
 ## 📊 任务栏显示
 
 把电量直接放上任务栏，不必常开主窗口：
 
-![任务栏内嵌电量条](docs/screenshots/taskbar-1.2.2.png)
+![任务栏内嵌电量条](docs/screenshots/taskbar-1.3.0.png)
 
 - **形态**：透明内嵌 `图标 + 百分比`，无胶囊底板；跟随任务栏明暗主题、DPI 缩放，Win10 图标自动回退 Segoe MDL2；
 - **内容**：耳机（可分左右耳）、鼠标、遥控器，以及可选的键盘 / 手柄 / 音箱等通用设备；最多 6 项，溢出显示 `+N`；
@@ -63,7 +63,7 @@
 
 | 设置 · 任务栏显示 |
 |:---:|
-| ![任务栏设置](docs/screenshots/taskbar-settings-1.2.2.png) |
+| ![任务栏设置](docs/screenshots/taskbar-settings-1.3.0.png) |
 
 > 任务栏显示形态参考了开源项目 BatteryHub；本项目为 clean-room 实现，只吸收行为与协议事实，未复制其 GPL-3.0 代码。调研记录见 [BatteryHub 调研与设计](docs/investigations/2026-11-27-batteryhub-design.md)。
 
@@ -113,7 +113,7 @@ Razer / HyperX / SteelSeries / 其他厂商私有协议长尾、Fast Pair / AirP
 
 ## 📦 安装
 
-1. 到 [Releases](https://github.com/Fat-kevin/mint-peripherals/releases) 下载最新的 `DeviceCenterPreview-Setup-x.x.x.exe`（约 83 MB，自包含运行时）
+1. 到 [Releases](https://github.com/Fat-kevin/mint-peripherals/releases) 下载最新的 `DeviceCenterPreview-Setup-x.x.x.exe`（约 39 MB；需要已安装 .NET 8 Desktop Runtime）
 2. 双击安装——按用户安装，不需要管理员；安装中会弹一次 UAC，用于注册遥控器音量键/返回键的辅助任务
 3. 装完直接启动；**旧版本升级直接双击覆盖**，主题、映射、开关、任务栏位置全部原地保留
 
@@ -134,9 +134,9 @@ dotnet build src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj -c Debug
 # 跑测试
 dotnet test tests/DeviceCenterPreview.Core.Tests/DeviceCenterPreview.Core.Tests.csproj
 
-# 打安装包（Inno Setup 6 + 自包含发布）
+# 打安装包（Inno Setup 6 + framework-dependent 发布）
 dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
-  -c Release -p:Platform=x64 -r win-x64 --self-contained true -o publish/app
+  -c Release -p:Platform=x64 -r win-x64 --self-contained false -o publish/app
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer/DeviceCenterPreview.iss
 ```
 

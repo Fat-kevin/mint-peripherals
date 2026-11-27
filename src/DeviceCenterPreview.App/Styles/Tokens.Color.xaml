@@ -15,6 +15,10 @@
             <SolidColorBrush x:Key="AppChromeBrush" Color="#0B0C0F" />
             <SolidColorBrush x:Key="AppTitleBarBrush" Color="#0F1114" />
             <SolidColorBrush x:Key="AppCardBrush" Color="#16181C" />
+            <LinearGradientBrush x:Key="AppCardGlassBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#12FFFFFF" Offset="0" />
+                <GradientStop Color="#08FFFFFF" Offset="1" />
+            </LinearGradientBrush>
             <SolidColorBrush x:Key="AppRaisedBrush" Color="#1A1D22" />
             <SolidColorBrush x:Key="AppInputBrush" Color="#16181C" />
             <SolidColorBrush x:Key="AppHoverBrush" Color="#1E2126" />
@@ -40,10 +44,10 @@
             <SolidColorBrush x:Key="AppTextDisabledBrush" Color="#4E555E" />
 
             <!-- 墨色（选中/主按钮） -->
-            <SolidColorBrush x:Key="AppInkBrush" Color="#F2F4F7" />
-            <SolidColorBrush x:Key="AppInkHoverBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AppInkPressedBrush" Color="#D8DDE3" />
-            <SolidColorBrush x:Key="AppOnInkBrush" Color="#111317" />
+            <SolidColorBrush x:Key="AppInkBrush" Color="#5FE0BE" />
+            <SolidColorBrush x:Key="AppInkHoverBrush" Color="#77E7C9" />
+            <SolidColorBrush x:Key="AppInkPressedBrush" Color="#4AC9A6" />
+            <SolidColorBrush x:Key="AppOnInkBrush" Color="#062019" />
             <SolidColorBrush x:Key="AppSeamBrush" Color="#262B31" />
 
             <!-- 品牌强调（深绿） -->
@@ -155,6 +159,10 @@
             <SolidColorBrush x:Key="AppChromeBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="AppTitleBarBrush" Color="#F5F6F7" />
             <SolidColorBrush x:Key="AppCardBrush" Color="#FFFFFF" />
+            <LinearGradientBrush x:Key="AppCardGlassBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#F7FFFFFF" Offset="0" />
+                <GradientStop Color="#D9FFFFFF" Offset="1" />
+            </LinearGradientBrush>
             <SolidColorBrush x:Key="AppRaisedBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="AppInputBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="AppHoverBrush" Color="#F1F2F4" />
@@ -180,9 +188,9 @@
             <SolidColorBrush x:Key="AppTextDisabledBrush" Color="#B7BCC3" />
 
             <!-- 墨色（选中/主按钮） -->
-            <SolidColorBrush x:Key="AppInkBrush" Color="#15171A" />
-            <SolidColorBrush x:Key="AppInkHoverBrush" Color="#2B2F34" />
-            <SolidColorBrush x:Key="AppInkPressedBrush" Color="#08090B" />
+            <SolidColorBrush x:Key="AppInkBrush" Color="#0F6B58" />
+            <SolidColorBrush x:Key="AppInkHoverBrush" Color="#0C5949" />
+            <SolidColorBrush x:Key="AppInkPressedBrush" Color="#0A4B3D" />
             <SolidColorBrush x:Key="AppOnInkBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="AppSeamBrush" Color="#E0E3E7" />
 

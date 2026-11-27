@@ -118,3 +118,50 @@
 - 截图脚本：`tools/capture-window.ps1`（PrintWindow 优先，带 UIA 点击参数）；hover 状态用
   `tools/capture-hover.ps1` 验证。
 - 设计阶段不反复启动应用；改完统一构建一次、跑一遍五页 + hover + 空/错误状态。
+
+
+## 9. 2026-11-27 实现：等权设备总览（Balanced）
+
+总览从「左侧栏 + 三列机架」改为「84px 图标栏 + 三张等权设备卡」，解决左栏大面积空白与耳机主场过大两个比例问题。
+
+### 布局比例
+
+- 窗口 1280×840；图标栏宽 **84**（原 248）；主区内边距 32。
+- 三列等宽，间距 14；每卡约 370 宽，铺满内容区高度。
+- 卡片内：设备名 18 / 元数据 11.5 / 产品图 172–220 / 电量 46 / 底部事实与动作。
+- 图标栏：品牌 38、导航按钮 48×44、状态点 5–7；不再放设备列表与文字。
+
+### 视觉令牌
+
+- 背景沿用 `AppCanvasBrush`；图标栏 `AppChromeBrush`；卡片使用新增的
+  `AppCardGlassBrush`（浅色半透白 / 深色半透白），边框 `AppCardBorderBrush`，圆角 16。
+- 设备身份只用卡片顶部 2px 色线与状态点：耳机 `AppHeadsetBrush`、鼠标 `AppMouseBrush`、遥控 `AppRemoteBrush`。
+- 强调色仍是薄荷绿；卡片主体文字保持中性，不把设备色用于正文。
+- 背景加两枚低透明度径向环境光（Content 区），仅作氛围，不承载信息。
+
+### 动效
+
+- 入场：三卡 110ms 错峰，620ms CubicEase(EaseOut) 从 opacity 0 / translateY 20 落位；数字 760ms 计数。
+- hover：卡片上浮 4px，260ms EaseOut；pointer exit 回 0。
+- 低电/状态：数字与状态点颜色用现有 `AppDangerBrush`，不新增循环动画。
+- 所有动画只改 `Opacity` / `TranslateTransform.Y`；遵循 `UISettings.AnimationsEnabled`；页面 `Unloaded` 停止数字计时器。
+
+### 验收截图
+
+- `design/balanced-app-final-light.png`、`design/balanced-app-dark.png`
+- `design/balanced-app-headset-dark.png`（其他页导航仍可用）
+
+
+### 图标栏状态点（修正）
+
+- 状态点不再放在图标自身的测量范围内；每个设备按钮内用 30×30 容器承载 18px 图标，6px 状态点贴图标右下角。
+- 状态点颜色只表示在线/离线（`AppSuccessBrush` / `AppOfflineBrush`）；tooltip 同时给出设备名、状态和电量，避免只靠颜色。
+- 引擎状态点独立在最底部，与设备状态点分开。
+
+### 内部页统一（2026-11-27 同日）
+
+- 所有详情/设置页统一到同一套页面层：30px 页面标题、无 overline、32px 页面内边距。
+- `BenchPanelStyle` 改为 `AppCardGlassBrush` + `AppCardBorderBrush` + 16 圆角，与总览卡片同一表面语言。
+- 选中 tab / 主按钮从近黑改为品牌薄荷绿（`AppInkBrush` 改为强调色，`AppOnInkBrush` 随主题），不再出现黑色胶囊。
+- 输入/按钮圆角统一到 8；设置、鼠标、遥控器的工作区切换保持同一选中逻辑。
+- 保留所有既有功能与写入校验，仅改表面与选中态 token。

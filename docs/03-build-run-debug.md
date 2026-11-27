@@ -39,9 +39,10 @@ cargo build --manifest-path sidecars/sayall-engine/Cargo.toml
 `%LOCALAPPDATA%\Programs\DeviceCenterPreview`，不需要管理员权限。
 
 ```powershell
-# 自包含运行目录：包含 .NET 8 Desktop Runtime、Windows App SDK、sidecar
+# 当前安装包使用 framework-dependent 发布：目标机需要 .NET 8 Desktop Runtime；
+# Windows App SDK、sidecar、Helper 仍随包分发。
 dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
-  -c Release -p:Platform=x64 -r win-x64 --self-contained true `
+  -c Release -p:Platform=x64 -r win-x64 --self-contained false `
   -p:PublishSingleFile=false -p:DebugType=None -p:DebugSymbols=false `
   -o publish/app
 
@@ -49,7 +50,7 @@ dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\DeviceCenterPreview.iss
 ```
 
-输出：`dist\DeviceCenterPreview-Setup-1.0.2.exe`。安装包未签名，Windows 可能提示
+输出：`dist\DeviceCenterPreview-Setup-1.3.0.exe`。安装包未签名，Windows 可能提示
 “未知发布者”；这是本地构建的正常现象。安装包会额外弹一次 UAC，用于把随包的
 `helper\sayall-helper.exe` 注册为 `SayAll RC003 Helper` 计划任务（音量键/返回键需要）。
 安装/卸载脚本见 [`installer/README.md`](../installer/README.md)。

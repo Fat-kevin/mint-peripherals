@@ -31,6 +31,8 @@ public sealed partial class HeadsetPage : Page, IThemeAware
     private CancellationTokenSource? _findCts;
     private bool _findRinging;
 
+    private bool _entrancePlayed;
+
     public HeadsetPage()
     {
         InitializeComponent();
@@ -114,10 +116,18 @@ public sealed partial class HeadsetPage : Page, IThemeAware
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
         Refresh();
         PageScroll.ChangeView(null, 0, null, true);
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            () => PageScroll.ChangeView(null, 0, null, true));
+        if (!_entrancePlayed)
+        {
+            _entrancePlayed = true;
+            UiMotion.PlayEntrance(PageContent);
+        }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _entrancePlayed = false;
         App.PeripheralService.Changed -= OnServiceChanged;
         _findCts?.Cancel();
     }
@@ -264,6 +274,10 @@ public sealed partial class HeadsetPage : Page, IThemeAware
         _ancIndex = index;
         ChipAnc.Text = AncNames[index];
         ApplySelectionColors();
+        if (sender is Button tile)
+        {
+            UiMotion.Pop(tile, 1.04, 180);
+        }
         Save();
     }
 
@@ -277,6 +291,10 @@ public sealed partial class HeadsetPage : Page, IThemeAware
         _eqIndex = index;
         ChipEq.Text = EqNames[index];
         ApplySelectionColors();
+        if (sender is Button tile)
+        {
+            UiMotion.Pop(tile, 1.04, 180);
+        }
         Save();
     }
 

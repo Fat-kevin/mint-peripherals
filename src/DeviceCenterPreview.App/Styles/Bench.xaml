@@ -11,7 +11,7 @@
     <!-- ===== 字阶（新页面专用，不改旧页样式） ===== -->
     <Style x:Key="BenchPageTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppDisplayFont}" />
-        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontSize" Value="30" />
         <Setter Property="LineHeight" Value="36" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
@@ -107,7 +107,7 @@
         <Setter Property="Background" Value="{ThemeResource AppInkBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource AppOnInkBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="FontSize" Value="12.5" />
@@ -157,7 +157,7 @@
         <Setter Property="Foreground" Value="{ThemeResource AppTextPrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource AppBorderStrongBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Padding" Value="13,0" />
         <Setter Property="FontSize" Value="12.5" />
@@ -208,7 +208,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{ThemeResource AppTextSecondaryBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinHeight" Value="28" />
         <Setter Property="Padding" Value="8,0" />
         <Setter Property="FontSize" Value="12" />
@@ -418,7 +418,7 @@
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
@@ -426,7 +426,7 @@
 
     <Style x:Key="BenchComboBoxStyle" TargetType="ComboBox">
         <Setter Property="MinHeight" Value="32" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -435,7 +435,7 @@
 
     <Style x:Key="BenchTextBoxStyle" TargetType="TextBox">
         <Setter Property="MinHeight" Value="32" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Padding" Value="10,4" />
     </Style>
@@ -453,7 +453,7 @@
         <Setter Property="Foreground" Value="{ThemeResource AppTextSecondaryBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource AppBorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinHeight" Value="28" />
         <Setter Property="Padding" Value="8,0" />
         <Setter Property="FontSize" Value="12" />
@@ -469,10 +469,10 @@
     </Style>
 
     <Style x:Key="BenchPanelStyle" TargetType="Border">
-        <Setter Property="Background" Value="{ThemeResource AppCardBrush}" />
-        <Setter Property="BorderBrush" Value="{ThemeResource AppBorderBrush}" />
+        <Setter Property="Background" Value="{ThemeResource AppCardGlassBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource AppCardBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="16" />
         <Setter Property="Padding" Value="20" />
     </Style>
 
@@ -489,6 +489,18 @@
         <Setter Property="Margin" Value="0,10,0,14" />
         <Setter Property="Background" Value="{ThemeResource AppBorderSubtleBrush}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- ===== 图标栏 ===== -->
+    <Style x:Key="RailNavButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="48" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 </ResourceDictionary>
 

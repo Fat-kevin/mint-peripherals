@@ -49,6 +49,8 @@ public sealed partial class MousePage : Page, IThemeAware
     private string _lastStageSignature = "";
     private string? _lastArtworkPath;
 
+    private bool _entrancePlayed;
+
     public MousePage()
     {
         InitializeComponent();
@@ -98,6 +100,11 @@ public sealed partial class MousePage : Page, IThemeAware
         ApplyWorkspace(_workspace);
         _ = RefreshMouseOnLoadAsync();
         ResetScrollToTop();
+        if (!_entrancePlayed)
+        {
+            _entrancePlayed = true;
+            UiMotion.PlayEntrance(PageContent);
+        }
     }
 
     private void ResetScrollToTop()
@@ -108,6 +115,7 @@ public sealed partial class MousePage : Page, IThemeAware
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _entrancePlayed = false;
         App.PeripheralService.Changed -= OnServiceChanged;
     }
 
@@ -423,6 +431,15 @@ public sealed partial class MousePage : Page, IThemeAware
         Apply(WorkspaceDpi, "dpi");
         Apply(WorkspaceButtons, "buttons");
         Apply(WorkspaceBoard, "board");
+
+        var activePanel = workspace switch
+        {
+            "buttons" => (FrameworkElement)MappingPanel,
+            "board" => BoardPanel,
+            _ => PerformanceCard,
+        };
+        UiMotion.PlayElementIn(activePanel, 8, 220);
+        UiMotion.Pop(workspace switch { "buttons" => WorkspaceButtons, "board" => WorkspaceBoard, _ => WorkspaceDpi });
 
         void Apply(Button button, string tag)
         {

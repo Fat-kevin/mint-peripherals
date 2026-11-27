@@ -1,8 +1,12 @@
+using System.Diagnostics;
 using DeviceCenterPreview.App.Services;
 using DeviceCenterPreview.Core.Models;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Windows.UI.ViewManagement;
 
 namespace DeviceCenterPreview.App.Views;
 
@@ -16,7 +20,17 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
     private const string RemoteGlyph = "\uE7FC";
     private const string BatteryGlyph = "\uE83F";
 
+    private static readonly TimeSpan EntranceStep = TimeSpan.FromMilliseconds(110);
+    private static readonly TimeSpan EntranceDuration = TimeSpan.FromMilliseconds(620);
+    private static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(260);
+
     private OtherRowViews[] _otherRows = [];
+    private readonly List<DispatcherQueueTimer> _numberTimers = [];
+    private bool _entrancePlayed;
+    private bool? _lastHeadsetConnected;
+    private bool? _lastMouseConnected;
+    private bool? _lastRemoteConnected;
+    private bool _entranceDone = true;
 
     public DeviceCenterPage()
     {
@@ -24,17 +38,30 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         _otherRows = CreateOtherRows();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+
+        foreach (var card in Cards())
+        {
+            card.RenderTransform = new TranslateTransform();
+            card.PointerEntered += Card_PointerEntered;
+            card.PointerExited += Card_PointerExited;
+        }
     }
+
+    private IEnumerable<Button> Cards() => [HeadsetColumn, MouseColumn, RemoteColumn];
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         App.PeripheralService.Changed += OnServiceChanged;
         Refresh();
+        PlayEntrance();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         App.PeripheralService.Changed -= OnServiceChanged;
+        StopNumberTimers();
+        _entrancePlayed = false;
+        _entranceDone = true;
     }
 
     private void OnServiceChanged(object? sender, EventArgs e) =>
@@ -51,47 +78,284 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         var otherDevices = GetOtherBatteryDevices(headset, mouse, remote);
         var online = (headset.IsConnected ? 1 : 0) + (mouse.IsConnected ? 1 : 0) +
                      (remote.IsConnected ? 1 : 0);
+        HeaderDot.Fill = StatusBrush(online > 0);
         HeaderSubtitle.Text = (online, otherDevices.Count) switch
         {
             (0, 0) => "没有设备在线 · 检查蓝牙配对或接收器",
             (0, _) => $"{otherDevices.Count} 台其他设备 · 数值全部来自真实链路",
-            (_, 0) => $"{online} 台设备在线 · 数值全部来自真实链路",
-            _ => $"{online} 台设备在线 · 另有 {otherDevices.Count} 台其他设备",
+            (3, 0) => "三台在线 · 数值全部来自真实链路",
+            (_, 0) => $"{online} 台在线 · 数值全部来自真实链路",
+            _ => $"{online} 台在线 · 另有 {otherDevices.Count} 台其他设备",
         };
 
-        // 耳机：三分量电量
+        // 耳机
         HeadsetName.Text = headset.DisplayName;
         HeadsetMeta.Text = headset.Firmware is { Length: > 0 } hf ? $"SPP · 固件 {hf}" : "SPP 音频通道";
-        HeadsetStatus.Text = headset.IsConnected ? "已连接" : "未连接";
         HeadsetDot.Fill = StatusBrush(headset.IsConnected);
-        HeadsetFact.Text = headset.ControlsAvailable
-            ? "降噪、EQ 与快捷开关可写"
-            : "控制通道未接入";
-        SetComponent(headset, "left", LeftFill, LeftRest, LeftPercent);
-        SetComponent(headset, "right", RightFill, RightRest, RightPercent);
-        SetComponent(headset, "case", CaseFill, CaseRest, CasePercent);
+        if (_lastHeadsetConnected is bool lastHeadset && lastHeadset != headset.IsConnected)
+        {
+            UiMotion.Pop(HeadsetDot, 1.6, 260);
+        }
+        _lastHeadsetConnected = headset.IsConnected;
+        HeadsetFact.Text = headset.ControlsAvailable ? "降噪 / EQ 可写" : "控制通道未接入";
+        SetBattery(headset, HeadsetBattery, HeadsetBatterySuffix, HeadsetLeftText, HeadsetRightText, HeadsetCaseText);
 
         // 鼠标
         MouseName.Text = mouse.DisplayName;
         MouseMeta.Text = mouse.Firmware is { Length: > 0 } mf ? $"HID++ · 固件 {mf}" : "HID++ 指针设备";
-        MouseStatus.Text = mouse.IsConnected ? "已连接" : "未连接";
         MouseDot.Fill = StatusBrush(mouse.IsConnected);
+        if (_lastMouseConnected is bool lastMouse && lastMouse != mouse.IsConnected)
+        {
+            UiMotion.Pop(MouseDot, 1.6, 260);
+        }
+        _lastMouseConnected = mouse.IsConnected;
         MouseFact.Text = mouse.ControlsAvailable
-            ? "DPI 与按键可读写"
-            : mouse.ControlHint ?? mouse.StatusText;
-        SetBattery(mouse, MouseBattery, MouseBatterySuffix, MouseFill, MouseRest);
+            ? "板载配置可写"
+            : Shorten(mouse.ControlHint ?? mouse.StatusText);
+        SetBattery(mouse, MouseBattery, MouseBatterySuffix, null, null, null);
 
         // 遥控器
         RemoteName.Text = remote.DisplayName;
         RemoteMeta.Text = remote.Firmware is { Length: > 0 } rf ? $"BLE · 固件 {rf}" : "BLE 语音与按键";
-        RemoteStatus.Text = remote.IsConnected ? "已连接" : "未连接";
         RemoteDot.Fill = StatusBrush(remote.IsConnected);
+        if (_lastRemoteConnected is bool lastRemote && lastRemote != remote.IsConnected)
+        {
+            UiMotion.Pop(RemoteDot, 1.6, 260);
+        }
+        _lastRemoteConnected = remote.IsConnected;
         RemoteFact.Text = remote.ControlsAvailable
-            ? "按键映射与语音可写"
-            : remote.ControlHint ?? remote.StatusText;
-        SetBattery(remote, RemoteBattery, RemoteBatterySuffix, RemoteFill, RemoteRest);
+            ? "语音通道就绪"
+            : Shorten(remote.ControlHint ?? remote.StatusText);
+        SetBattery(remote, RemoteBattery, RemoteBatterySuffix, null, null, null);
 
         UpdateOtherDeviceRows(otherDevices);
+    }
+
+    private static string Shorten(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "—";
+        }
+
+        return value.Length <= 18 ? value : value[..17] + "…";
+    }
+
+    private void SetBattery(
+        PeripheralSnapshot snapshot,
+        TextBlock number,
+        TextBlock suffix,
+        TextBlock? left,
+        TextBlock? right,
+        TextBlock? caseBox)
+    {
+        var value = EffectiveBattery(snapshot);
+        var previous = number.Text;
+        number.Text = value is int pct ? pct.ToString() : "—";
+        if (_entranceDone && previous != number.Text && previous.Length > 0)
+        {
+            UiMotion.Pop(number, 1.04, 220);
+        }
+        suffix.Visibility = value is null ? Visibility.Collapsed : Visibility.Visible;
+        var brush = BatteryBrush(snapshot);
+        number.Foreground = brush;
+        suffix.Foreground = batterySuffixBrush(snapshot);
+
+        if (left is not null && right is not null && caseBox is not null)
+        {
+            left.Text = ComponentText(snapshot, "left", "左耳");
+            right.Text = ComponentText(snapshot, "right", "右耳");
+            caseBox.Text = ComponentText(snapshot, "case", "充电盒");
+        }
+
+        Brush batterySuffixBrush(PeripheralSnapshot s) =>
+            EffectiveBattery(s) is int p && p <= 15 && s.Charging is not (ChargingState.Charging or ChargingState.Full)
+                ? AppTheme.GetBrush(this, "AppDangerBrush")
+                : AppTheme.GetBrush(this, "AppTextSecondaryBrush");
+    }
+
+    /// <summary>
+    /// 耳机没有整机电量字段时，用左右耳真实分量平均值作整机读数；不伪造缺失数据。
+    /// </summary>
+    private static int? EffectiveBattery(PeripheralSnapshot snapshot)
+    {
+        if (snapshot.BatteryPercent is int direct)
+        {
+            return direct;
+        }
+
+        var parts = snapshot.Components
+            .Where(item => item.Key is "left" or "right" && item.Percent is int)
+            .Select(item => item.Percent!.Value)
+            .ToArray();
+        return parts.Length >= 2 ? (int)Math.Round(parts.Average()) : parts.FirstOrDefault() is var first && parts.Length == 1 ? first : null;
+    }
+
+    private static string ComponentText(PeripheralSnapshot snapshot, string key, string label)
+    {
+        var component = snapshot.Components.FirstOrDefault(item => item.Key == key);
+        return component?.Percent is int pct ? $"{label} {pct}%" : $"{label} —";
+    }
+
+    private void PlayEntrance()
+    {
+        if (_entrancePlayed)
+        {
+            return;
+        }
+
+        _entrancePlayed = true;
+        if (!AnimationsEnabled())
+        {
+            return;
+        }
+
+        _entranceDone = false;
+        var storyboard = new Storyboard();
+        var index = 0;
+        foreach (var card in Cards())
+        {
+            var transform = (TranslateTransform)card.RenderTransform;
+            card.Opacity = 0;
+            transform.Y = 20;
+
+            var begin = TimeSpan.FromMilliseconds(index * EntranceStep.TotalMilliseconds);
+            var fade = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = EntranceDuration,
+                BeginTime = begin,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            };
+            Storyboard.SetTarget(fade, card);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            storyboard.Children.Add(fade);
+
+            var move = new DoubleAnimation
+            {
+                From = 20,
+                To = 0,
+                Duration = EntranceDuration,
+                BeginTime = begin,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            };
+            Storyboard.SetTarget(move, transform);
+            Storyboard.SetTargetProperty(move, "Y");
+            storyboard.Children.Add(move);
+            index++;
+        }
+
+        storyboard.Completed += (_, _) => _entranceDone = true;
+        storyboard.Begin();
+
+        AnimateNumber(HeadsetBattery, 540);
+        AnimateNumber(MouseBattery, 650);
+        AnimateNumber(RemoteBattery, 760);
+    }
+
+    private static bool AnimationsEnabled()
+    {
+        try
+        {
+            return new UISettings().AnimationsEnabled;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private void AnimateNumber(TextBlock block, int delayMs)
+    {
+        if (block.Text is not { Length: > 0 } text || !int.TryParse(text, out var target) || target < 0 || target > 100)
+        {
+            return;
+        }
+
+        block.Text = "0";
+        var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(16);
+        var stopwatch = Stopwatch.StartNew();
+        const double duration = 760;
+        var delayed = false;
+
+        timer.Tick += (_, _) =>
+        {
+            var elapsed = stopwatch.Elapsed.TotalMilliseconds - delayMs;
+            if (elapsed < 0)
+            {
+                return;
+            }
+
+            if (!delayed)
+            {
+                delayed = true;
+            }
+
+            var progress = Math.Clamp(elapsed / duration, 0, 1);
+            var eased = 1 - Math.Pow(2, -10 * progress);
+            block.Text = Math.Round(target * eased).ToString("0");
+            if (progress >= 1)
+            {
+                block.Text = target.ToString("0");
+                timer.Stop();
+                _numberTimers.Remove(timer);
+            }
+        };
+
+        _numberTimers.Add(timer);
+        timer.Start();
+    }
+
+    private void StopNumberTimers()
+    {
+        foreach (var timer in _numberTimers)
+        {
+            timer.Stop();
+        }
+
+        _numberTimers.Clear();
+    }
+
+    private void Card_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (!_entranceDone)
+        {
+            return;
+        }
+
+        AnimateCard(sender as Button, -4);
+    }
+
+    private void Card_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (!_entranceDone)
+        {
+            return;
+        }
+
+        AnimateCard(sender as Button, 0);
+    }
+
+    private void AnimateCard(Button? card, double targetY)
+    {
+        if (card?.RenderTransform is not TranslateTransform transform || !AnimationsEnabled())
+        {
+            return;
+        }
+
+        var animation = new DoubleAnimation
+        {
+            To = targetY,
+            Duration = HoverDuration,
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+        Storyboard.SetTarget(animation, transform);
+        Storyboard.SetTargetProperty(animation, "Y");
+        var storyboard = new Storyboard();
+        storyboard.Children.Add(animation);
+        storyboard.Begin();
     }
 
     private OtherRowViews[] CreateOtherRows() =>
@@ -228,9 +492,24 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
             return AppTheme.GetBrush(this, "AppTextTertiaryBrush");
         }
 
-        // 低电 = 颜色 + 文案双编码（状态列写"在线/放电中"），不单靠颜色。
         if (device.Percent is int percent && percent <= 15 &&
             device.Charging is not (ChargingState.Charging or ChargingState.Full))
+        {
+            return AppTheme.GetBrush(this, "AppDangerBrush");
+        }
+
+        return AppTheme.GetBrush(this, "AppTextPrimaryBrush");
+    }
+
+    private Brush BatteryBrush(PeripheralSnapshot snapshot)
+    {
+        if (!snapshot.IsConnected)
+        {
+            return AppTheme.GetBrush(this, "AppTextTertiaryBrush");
+        }
+
+        if (EffectiveBattery(snapshot) is int pct && pct <= 15 &&
+            snapshot.Charging is not (ChargingState.Charging or ChargingState.Full))
         {
             return AppTheme.GetBrush(this, "AppDangerBrush");
         }
@@ -261,45 +540,6 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         TextBlock Name,
         TextBlock Percent,
         TextBlock State);
-
-    private void SetComponent(
-        PeripheralSnapshot snapshot,
-        string key,
-        ColumnDefinition fill,
-        ColumnDefinition rest,
-        TextBlock percent)
-    {
-        var component = snapshot.Components.FirstOrDefault(item => item.Key == key);
-        var value = component?.Percent;
-        percent.Text = value is int pct ? $"{pct}%" : "—";
-        SetBar(fill, rest, value);
-    }
-
-    private static void SetBattery(
-        PeripheralSnapshot snapshot,
-        TextBlock number,
-        TextBlock suffix,
-        ColumnDefinition fill,
-        ColumnDefinition rest)
-    {
-        var value = snapshot.BatteryPercent;
-        number.Text = value is int pct ? pct.ToString() : "—";
-        suffix.Visibility = value is null ? Visibility.Collapsed : Visibility.Visible;
-        SetBar(fill, rest, value);
-    }
-
-    private static void SetBar(ColumnDefinition fill, ColumnDefinition rest, int? value)
-    {
-        if (value is int pct)
-        {
-            fill.Width = new GridLength(Math.Clamp(pct, 0, 100), GridUnitType.Star);
-            rest.Width = new GridLength(Math.Clamp(100 - pct, 0, 100), GridUnitType.Star);
-            return;
-        }
-
-        fill.Width = new GridLength(0, GridUnitType.Star);
-        rest.Width = new GridLength(1, GridUnitType.Star);
-    }
 
     private Microsoft.UI.Xaml.Media.Brush StatusBrush(bool connected) =>
         AppTheme.GetBrush(this, connected ? "AppSuccessBrush" : "AppOfflineBrush");
@@ -353,4 +593,3 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         Frame.BackStack.Clear();
     }
 }
-

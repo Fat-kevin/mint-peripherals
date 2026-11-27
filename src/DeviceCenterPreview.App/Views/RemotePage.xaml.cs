@@ -137,6 +137,8 @@ public sealed partial class RemotePage : Page, IThemeAware
     private DateTimeOffset _testEndsAt;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _statusTimer;
 
+    private bool _entrancePlayed;
+
     public RemotePage()
     {
         InitializeComponent();
@@ -164,6 +166,11 @@ public sealed partial class RemotePage : Page, IThemeAware
         _ = LoadRemoteAsync();
         _statusTimer.Start();
         ResetScrollToTop();
+        if (!_entrancePlayed)
+        {
+            _entrancePlayed = true;
+            UiMotion.PlayEntrance(PageContent);
+        }
     }
 
     private void ResetScrollToTop()
@@ -174,6 +181,7 @@ public sealed partial class RemotePage : Page, IThemeAware
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _entrancePlayed = false;
         App.PeripheralService.Changed -= OnServiceChanged;
         App.PeripheralService.RemoteButtonReceived -= OnRemoteButtonReceived;
         _statusTimer.Stop();
@@ -787,6 +795,10 @@ public sealed partial class RemotePage : Page, IThemeAware
         var idle = AppTheme.GetBrush(this, "AppTextSecondaryBrush");
         Style(TabLayout, "layout");
         Style(TabVoice, "voice");
+
+        var activeStage = bind ? (FrameworkElement)BindingWorkspace : VoiceWorkspace;
+        UiMotion.PlayElementIn(activeStage, 8, 220);
+        UiMotion.Pop(bind ? TabLayout : TabVoice);
 
         void Style(Button button, string tag)
         {

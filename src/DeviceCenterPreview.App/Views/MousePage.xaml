@@ -17,7 +17,6 @@
             <!-- 页头 -->
             <Grid>
                 <StackPanel Spacing="4">
-                    <TextBlock Text="设备 02 · 指针与按键" Style="{StaticResource BenchLabelStyle}" />
                     <TextBlock x:Name="TitleText" Text="鼠标"
                                Style="{StaticResource BenchPageTitleStyle}" />
                     <TextBlock x:Name="SubtitleText" Text="正在读取…"

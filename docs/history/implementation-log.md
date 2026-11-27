@@ -778,3 +778,28 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
   仍放不下则隐藏，不覆盖任务按钮。
 - 1.2.2：耳机在任务栏分左右耳显示电量（SPP `LeftEarPercent`/`RightEarPercent` → `左 70% 右 60%`），
   低电/充电/充满按双耳状态判断；只有系统聚合电量时仍显示单值；tooltip 保留左/右/充电盒明细。
+
+
+## 2026-11-27 · 总览等权卡片实现
+
+- 主窗口左侧 248px 侧栏改为 84px 图标栏（品牌 / 设备导航 / 设置 / 引擎状态点）。
+- `DeviceCenterPage` 重写为页头 + 三张等权设备卡：耳机 / 鼠标 / 遥控器同一宽度，顶部 2px 设备色线，
+  产品图 220 / 172 / 200，电量 46，底部动作与事实。
+- 卡片使用 `AppCardGlassBrush`、16 圆角、1px 边框；新增两枚低透明度环境光。
+- 动效：110ms 错峰入场 + 620ms 落位 + 760ms 数字计数；hover 上浮 4px；遵循系统动画开关。
+- 耳机无整机电量时用左右耳真实分量平均值显示，不伪造缺失值。
+- 构建：0 warning / 0 error；实际启动截图见 `design/balanced-app-final-light.png`、`design/balanced-app-dark.png`。
+
+## 2026-11-27 · 图标栏状态点与内部页统一
+
+- 修复图标栏状态点落在图标内部的问题：每个设备按钮改为 30×30 内容容器，状态点贴图标右下；tooltip 带设备名/状态/电量。
+- `AppInkBrush` 改为品牌薄荷绿，主按钮与选中 tab 从黑色胶囊改为绿色选中；`BenchPanelStyle` 改用玻璃表面 + 16 圆角。
+- 移除详情/设置页编号 overline，统一 30px 页面标题与 32 内边距；头部页签、面板、输入控件圆角统一为 8/16。
+- 功能层未改：真实电量/连接/写入校验与页面事件保持不变。
+
+## 2026-11-27 · 全局非线性动效
+
+- 新增 `Services/UiMotion.cs`：统一 Exponential/Cubic/Back 非线性 easing，页面入场、元素淡入、pop、图标栏颜色动画。
+- 总览/详情/设置/遥控器/鼠标：页面进入 52ms 阶梯落位；工作区/分类切换淡入上移；耳机模式/EQ、页签选中 pop。
+- 图标栏：选中底色 280ms 颜色动画；hover 1.06 / press .94；状态点与电量大数字变化时单次 pop。
+- 全部遵循 `UISettings.AnimationsEnabled`，只改 opacity/transform/brush color；页面 Unloaded 重置入场状态。

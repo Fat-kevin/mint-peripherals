@@ -1,4 +1,4 @@
-﻿using DeviceCenterPreview.App.Services;
+using DeviceCenterPreview.App.Services;
 using Microsoft.UI;
 using DeviceCenterPreview.App.Views;
 using DeviceCenterPreview.Core.Models;
@@ -6,7 +6,9 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
+using Windows.Foundation;
 using Windows.Graphics;
 using Windows.UI;
 
@@ -31,6 +33,11 @@ public sealed partial class MainWindow : Window
         }
 
         InitializeComponent();
+        AttachRailFeedback(OverviewNav, HeadsetNav, MouseNav, RemoteNav, SettingsNav);
+        foreach (var railButton in new[] { OverviewNav, HeadsetNav, MouseNav, RemoteNav, SettingsNav })
+        {
+            railButton.Background = new SolidColorBrush(Colors.Transparent);
+        }
         Root.RequestedTheme = AppTheme.Resolve(App.Settings.ThemeMode);
         AppTheme.SyncFrom(Root);
         Root.ActualThemeChanged += OnActualThemeChanged;
@@ -39,9 +46,6 @@ public sealed partial class MainWindow : Window
         AppTheme.ApplyTitleBar(this, Root);
         ApplyWallpaperTint();
         ContentFrame.Navigated += OnContentFrameNavigated;
-
-        EngineVersionText.Text =
-            $"v{typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"} · SPP / HID++ / BLE";
 
         _notificationTimer.Interval = TimeSpan.FromSeconds(7);
         _notificationTimer.Tick += (_, _) =>
@@ -112,6 +116,49 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void AttachRailFeedback(params Button[] buttons)
+    {
+        foreach (var button in buttons)
+        {
+            if (button.Content is not FrameworkElement visual)
+            {
+                continue;
+            }
+
+            visual.RenderTransformOrigin = new Point(0.5, 0.5);
+            visual.RenderTransform = new CompositeTransform();
+            button.PointerEntered += (_, _) => AnimateRailScale(visual, 1.06, 160);
+            button.PointerExited += (_, _) => AnimateRailScale(visual, 1, 220);
+            button.PointerPressed += (_, _) => AnimateRailScale(visual, 0.94, 90);
+            button.PointerReleased += (_, _) => AnimateRailScale(visual, 1.06, 140);
+        }
+    }
+
+    private static void AnimateRailScale(FrameworkElement element, double target, int durationMs)
+    {
+        if (element.RenderTransform is not CompositeTransform transform || !UiMotion.Enabled)
+        {
+            return;
+        }
+
+        var storyboard = new Storyboard();
+        var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+        foreach (var property in new[] { "ScaleX", "ScaleY" })
+        {
+            var animation = new DoubleAnimation
+            {
+                To = target,
+                Duration = new Duration(TimeSpan.FromMilliseconds(durationMs)),
+                EasingFunction = easing,
+            };
+            Storyboard.SetTarget(animation, transform);
+            Storyboard.SetTargetProperty(animation, property);
+            storyboard.Children.Add(animation);
+        }
+
+        storyboard.Begin();
+    }
+
     // ---------------------------------------------------------------- 设备栏
 
     private void OnServiceChanged(object? sender, EventArgs e) =>
@@ -119,24 +166,29 @@ public sealed partial class MainWindow : Window
 
     private void RefreshSidebar()
     {
-        UpdateNav(HeadsetNavName, HeadsetNavStatus, HeadsetNavDot, HeadsetNavBattery, DeviceKind.Headset);
-        UpdateNav(MouseNavName, MouseNavStatus, MouseNavDot, MouseNavBattery, DeviceKind.Mouse);
-        UpdateNav(RemoteNavName, RemoteNavStatus, RemoteNavDot, RemoteNavBattery, DeviceKind.Remote);
+        UpdateRail(HeadsetNav, HeadsetNavDot, DeviceKind.Headset);
+        UpdateRail(MouseNav, MouseNavDot, DeviceKind.Mouse);
+        UpdateRail(RemoteNav, RemoteNavDot, DeviceKind.Remote);
+
+        try
+        {
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+            ToolTipService.SetToolTip(EngineDot, $"本地引擎运行中 · v{version}");
+        }
+        catch
+        {
+            // tooltip 失败不影响主流程
+        }
     }
 
-    private void UpdateNav(
-        TextBlock name,
-        TextBlock status,
-        Microsoft.UI.Xaml.Shapes.Ellipse dot,
-        TextBlock battery,
-        DeviceKind kind)
+    private void UpdateRail(Button button, Microsoft.UI.Xaml.Shapes.Ellipse dot, DeviceKind kind)
     {
         var snapshot = App.PeripheralService.GetSnapshot(kind);
-        name.Text = snapshot.DisplayName;
-        status.Text = snapshot.IsConnected ? "已连接" : "未连接";
         dot.Fill = AppTheme.GetBrush(Root,
             snapshot.IsConnected ? "AppSuccessBrush" : "AppOfflineBrush");
-        battery.Text = snapshot.BatteryPercent is int value ? $"{value}%" : "—";
+        var battery = snapshot.BatteryPercent is int value ? $" · {value}%" : "";
+        var state = snapshot.IsConnected ? "已连接" : "未连接";
+        ToolTipService.SetToolTip(button, $"{snapshot.DisplayName} · {state}{battery}");
     }
 
     private void DeviceNav_Click(object sender, RoutedEventArgs e)
@@ -179,35 +231,39 @@ public sealed partial class MainWindow : Window
 
     private void SetActive(string tag)
     {
+        var changed = !string.Equals(_activeTag, tag, StringComparison.Ordinal);
         _activeTag = tag;
-        var selected = AppTheme.GetBrush(Root, "AppPressedBrush");
-        var transparent = new SolidColorBrush(Colors.Transparent);
+        var selected = AppTheme.GetBrush(Root, "AppSelectedBrush");
+        var selectedColor = (selected as SolidColorBrush)?.Color ?? Colors.Transparent;
+        var accent = AppTheme.GetBrush(Root, "AppIonBrush");
+        var idle = AppTheme.GetBrush(Root, "AppTextSecondaryBrush");
 
-        StyleDevice(HeadsetNav, HeadsetNavName, tag == "headset", selected, transparent);
-        StyleDevice(MouseNav, MouseNavName, tag == "mouse", selected, transparent);
-        StyleDevice(RemoteNav, RemoteNavName, tag == "remote", selected, transparent);
+        StyleRail(OverviewNav, tag == "hub");
+        StyleRail(HeadsetNav, tag == "headset");
+        StyleRail(MouseNav, tag == "mouse");
+        StyleRail(RemoteNav, tag == "remote");
+        StyleRail(SettingsNav, tag == "settings");
 
-        StyleFlat(OverviewNav, OverviewNavText, tag == "hub", selected, transparent);
-        StyleFlat(SettingsNav, SettingsNavText, tag == "settings", selected, transparent);
-
-        void StyleDevice(Button button, TextBlock name, bool isActive, Brush activeBrush, Brush idleBrush)
+        void StyleRail(Button button, bool isActive)
         {
-            button.Background = isActive ? activeBrush : idleBrush;
-            name.Foreground = AppTheme.GetBrush(Root,
-                isActive ? "AppTextPrimaryBrush" : "AppTextPrimaryBrush");
-            name.FontWeight = isActive
-                ? Microsoft.UI.Text.FontWeights.SemiBold
-                : Microsoft.UI.Text.FontWeights.SemiBold;
-        }
-
-        void StyleFlat(Button button, TextBlock text, bool isActive, Brush activeBrush, Brush idleBrush)
-        {
-            button.Background = isActive ? activeBrush : idleBrush;
-            text.Foreground = AppTheme.GetBrush(Root,
-                isActive ? "AppTextPrimaryBrush" : "AppTextSecondaryBrush");
-            text.FontWeight = isActive
-                ? Microsoft.UI.Text.FontWeights.SemiBold
-                : Microsoft.UI.Text.FontWeights.Normal;
+            if (button.Background is SolidColorBrush railBrush)
+            {
+                UiMotion.AnimateColor(railBrush, isActive ? selectedColor : Colors.Transparent);
+            }
+            var icon = button.Content switch
+            {
+                FontIcon direct => direct,
+                Grid grid => grid.Children.OfType<FontIcon>().FirstOrDefault(),
+                _ => null,
+            };
+            if (icon is not null)
+            {
+                icon.Foreground = isActive ? accent : idle;
+                if (isActive && changed)
+                {
+                    UiMotion.Pop(icon, 1.12, 220);
+                }
+            }
         }
     }
 

@@ -17,7 +17,6 @@
             <!-- 页头 -->
             <Grid>
                 <StackPanel Spacing="4">
-                    <TextBlock Text="偏好与数据" Style="{StaticResource BenchLabelStyle}" />
                     <TextBlock Text="设置" Style="{StaticResource BenchPageTitleStyle}" />
                     <TextBlock Text="修改后立即保存并生效；模块关闭后不再扫描对应设备。"
                                Style="{StaticResource BenchMetaStyle}" />

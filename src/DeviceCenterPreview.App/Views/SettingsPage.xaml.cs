@@ -78,6 +78,8 @@ public sealed partial class SettingsPage : Page, IThemeAware
     private DispatcherTimer? _resetTimer;
     private List<string> _backupFiles = new();
 
+    private bool _entrancePlayed;
+
     public SettingsPage()
     {
         InitializeComponent();
@@ -139,6 +141,11 @@ public sealed partial class SettingsPage : Page, IThemeAware
         }
 
         PageScroll.ChangeView(null, 0, null, true);
+        if (_categories[_category] is FrameworkElement activeCategory)
+        {
+            UiMotion.PlayElementIn(activeCategory, 8, 220);
+        }
+        UiMotion.Pop(_tabs[_category]);
     }
 
     public void OnAppThemeChanged() => ApplyCategory(_category);
@@ -155,6 +162,11 @@ public sealed partial class SettingsPage : Page, IThemeAware
         PageContent.Width = Math.Max(0, PageScroll.ViewportWidth);
         LoadSettings();
         ResetScrollToTop();
+        if (!_entrancePlayed)
+        {
+            _entrancePlayed = true;
+            UiMotion.PlayEntrance(PageContent);
+        }
     }
 
     private void ResetScrollToTop()
@@ -165,6 +177,7 @@ public sealed partial class SettingsPage : Page, IThemeAware
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _entrancePlayed = false;
         if (ReferenceEquals(_instance, this))
         {
             _instance = null;
