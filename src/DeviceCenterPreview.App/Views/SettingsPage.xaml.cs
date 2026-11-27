@@ -145,7 +145,6 @@ public sealed partial class SettingsPage : Page, IThemeAware
         {
             UiMotion.PlayElementIn(activeCategory, 8, 220);
         }
-        UiMotion.Pop(_tabs[_category]);
     }
 
     public void OnAppThemeChanged() => ApplyCategory(_category);

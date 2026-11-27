@@ -439,7 +439,6 @@ public sealed partial class MousePage : Page, IThemeAware
             _ => PerformanceCard,
         };
         UiMotion.PlayElementIn(activePanel, 8, 220);
-        UiMotion.Pop(workspace switch { "buttons" => WorkspaceButtons, "board" => WorkspaceBoard, _ => WorkspaceDpi });
 
         void Apply(Button button, string tag)
         {

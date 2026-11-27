@@ -9,7 +9,7 @@
 耳机调音、鼠标调档、遥控映射、任务栏电量值守——一台 Windows 设备上的外设控制台，
 原生 WinUI 3，不塞浏览器内核，不画假数据。
 
-[![Version](https://img.shields.io/badge/version-1.3.0-0E9A76?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
+[![Version](https://img.shields.io/badge/version-1.3.1-0E9A76?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0E9A76?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?style=flat-square)](https://github.com/Fat-kevin/mint-peripherals/releases)
 [![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square)](src)

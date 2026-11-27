@@ -803,3 +803,10 @@ Fluent 2、Galaxy Buds One UI 8、Logi Options+。
 - 总览/详情/设置/遥控器/鼠标：页面进入 52ms 阶梯落位；工作区/分类切换淡入上移；耳机模式/EQ、页签选中 pop。
 - 图标栏：选中底色 280ms 颜色动画；hover 1.06 / press .94；状态点与电量大数字变化时单次 pop。
 - 全部遵循 `UISettings.AnimationsEnabled`，只改 opacity/transform/brush color；页面 Unloaded 重置入场状态。
+
+## 2026-11-27 · 1.3.1 发布修复
+
+- 定位到 Release 构建启动崩溃：WinUI 在 Release 下对代码创建的 `Storyboard` 缩放/回弹组合（pop）不可靠；Debug 正常。
+- 移除全部 pop 动画（图标/页签/数字/状态点），保留页面入场、工作区淡入、图标 hover/press；Release 启动与五页导航恢复稳定。
+- 安装包改为 framework-dependent（需要 .NET 8 Desktop Runtime）；补充发布目标的 `.xbf` 复制，避免发布版缺 XAML 资源。
+- 包：`dist/DeviceCenterPreview-Setup-1.3.1.exe`。

@@ -798,7 +798,6 @@ public sealed partial class RemotePage : Page, IThemeAware
 
         var activeStage = bind ? (FrameworkElement)BindingWorkspace : VoiceWorkspace;
         UiMotion.PlayElementIn(activeStage, 8, 220);
-        UiMotion.Pop(bind ? TabLayout : TabVoice);
 
         void Style(Button button, string tag)
         {

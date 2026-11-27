@@ -92,10 +92,7 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         HeadsetName.Text = headset.DisplayName;
         HeadsetMeta.Text = headset.Firmware is { Length: > 0 } hf ? $"SPP · 固件 {hf}" : "SPP 音频通道";
         HeadsetDot.Fill = StatusBrush(headset.IsConnected);
-        if (_lastHeadsetConnected is bool lastHeadset && lastHeadset != headset.IsConnected)
-        {
-            UiMotion.Pop(HeadsetDot, 1.6, 260);
-        }
+
         _lastHeadsetConnected = headset.IsConnected;
         HeadsetFact.Text = headset.ControlsAvailable ? "降噪 / EQ 可写" : "控制通道未接入";
         SetBattery(headset, HeadsetBattery, HeadsetBatterySuffix, HeadsetLeftText, HeadsetRightText, HeadsetCaseText);
@@ -104,10 +101,7 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         MouseName.Text = mouse.DisplayName;
         MouseMeta.Text = mouse.Firmware is { Length: > 0 } mf ? $"HID++ · 固件 {mf}" : "HID++ 指针设备";
         MouseDot.Fill = StatusBrush(mouse.IsConnected);
-        if (_lastMouseConnected is bool lastMouse && lastMouse != mouse.IsConnected)
-        {
-            UiMotion.Pop(MouseDot, 1.6, 260);
-        }
+
         _lastMouseConnected = mouse.IsConnected;
         MouseFact.Text = mouse.ControlsAvailable
             ? "板载配置可写"
@@ -118,10 +112,7 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         RemoteName.Text = remote.DisplayName;
         RemoteMeta.Text = remote.Firmware is { Length: > 0 } rf ? $"BLE · 固件 {rf}" : "BLE 语音与按键";
         RemoteDot.Fill = StatusBrush(remote.IsConnected);
-        if (_lastRemoteConnected is bool lastRemote && lastRemote != remote.IsConnected)
-        {
-            UiMotion.Pop(RemoteDot, 1.6, 260);
-        }
+
         _lastRemoteConnected = remote.IsConnected;
         RemoteFact.Text = remote.ControlsAvailable
             ? "语音通道就绪"
@@ -152,10 +143,6 @@ public sealed partial class DeviceCenterPage : Page, IThemeAware
         var value = EffectiveBattery(snapshot);
         var previous = number.Text;
         number.Text = value is int pct ? pct.ToString() : "—";
-        if (_entranceDone && previous != number.Text && previous.Length > 0)
-        {
-            UiMotion.Pop(number, 1.04, 220);
-        }
         suffix.Visibility = value is null ? Visibility.Collapsed : Visibility.Visible;
         var brush = BatteryBrush(snapshot);
         number.Foreground = brush;

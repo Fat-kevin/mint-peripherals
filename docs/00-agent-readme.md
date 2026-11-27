@@ -44,7 +44,7 @@ dotnet test tests/DeviceCenterPreview.Core.Tests/DeviceCenterPreview.Core.Tests.
 > 以上命令只依赖 `device-center-preview/` 内的文件。C# 依赖在 `external/`，
 > Rust 依赖在 `external/rust/`，sidecar 源码在 `sidecars/`。
 
-安装包（framework-dependent：目标机需要 .NET 8 Desktop Runtime；当前包为 1.3.0）：
+安装包（framework-dependent：目标机需要 .NET 8 Desktop Runtime；当前包为 1.3.1）：
 
 ```powershell
 dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
@@ -55,7 +55,7 @@ dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\DeviceCenterPreview.iss
 ```
 
-输出：`dist\DeviceCenterPreview-Setup-1.3.0.exe`
+输出：`dist\DeviceCenterPreview-Setup-1.3.1.exe`
 
 遥控器 sidecar：
 

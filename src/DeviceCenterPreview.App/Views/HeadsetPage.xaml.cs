@@ -274,10 +274,6 @@ public sealed partial class HeadsetPage : Page, IThemeAware
         _ancIndex = index;
         ChipAnc.Text = AncNames[index];
         ApplySelectionColors();
-        if (sender is Button tile)
-        {
-            UiMotion.Pop(tile, 1.04, 180);
-        }
         Save();
     }
 
@@ -291,10 +287,6 @@ public sealed partial class HeadsetPage : Page, IThemeAware
         _eqIndex = index;
         ChipEq.Text = EqNames[index];
         ApplySelectionColors();
-        if (sender is Button tile)
-        {
-            UiMotion.Pop(tile, 1.04, 180);
-        }
         Save();
     }
 

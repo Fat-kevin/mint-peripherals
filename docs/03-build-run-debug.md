@@ -50,7 +50,7 @@ dotnet publish src/DeviceCenterPreview.App/DeviceCenterPreview.App.csproj `
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\DeviceCenterPreview.iss
 ```
 
-输出：`dist\DeviceCenterPreview-Setup-1.3.0.exe`。安装包未签名，Windows 可能提示
+输出：`dist\DeviceCenterPreview-Setup-1.3.1.exe`。安装包未签名，Windows 可能提示
 “未知发布者”；这是本地构建的正常现象。安装包会额外弹一次 UAC，用于把随包的
 `helper\sayall-helper.exe` 注册为 `SayAll RC003 Helper` 计划任务（音量键/返回键需要）。
 安装/卸载脚本见 [`installer/README.md`](../installer/README.md)。

@@ -248,7 +248,7 @@ public sealed partial class MainWindow : Window
         {
             if (button.Background is SolidColorBrush railBrush)
             {
-                UiMotion.AnimateColor(railBrush, isActive ? selectedColor : Colors.Transparent);
+                railBrush.Color = isActive ? selectedColor : Colors.Transparent;
             }
             var icon = button.Content switch
             {
@@ -259,10 +259,6 @@ public sealed partial class MainWindow : Window
             if (icon is not null)
             {
                 icon.Foreground = isActive ? accent : idle;
-                if (isActive && changed)
-                {
-                    UiMotion.Pop(icon, 1.12, 220);
-                }
             }
         }
     }
